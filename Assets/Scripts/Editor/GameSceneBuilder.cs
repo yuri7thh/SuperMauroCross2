@@ -26,6 +26,7 @@ public static class GameSceneBuilder
 
         CameraController camCtrl = BuildCamera();
         BuildGlobalLight();
+        BuildParallax();
         DifficultyDriver difficulty = BuildGameManager();
         GameObject playerGo = BuildPlayerInstance(playerPrefab, difficulty);
         if (camCtrl != null) camCtrl.target = playerGo.transform;
@@ -48,6 +49,71 @@ public static class GameSceneBuilder
         {
             if (!File.Exists(ScenePath)) Build();
         };
+    }
+
+    private static void BuildParallax()
+    {
+        Sprite stripe = EnsureStripeSprite();
+        if (stripe == null) return;
+
+        CreateParallaxLayer("Parallax_Far", stripe, 0.15f, -30, new Color(0.5f, 0.55f, 0.65f, 1f), 4.5f, 6f, 6f);
+        CreateParallaxLayer("Parallax_Mid", stripe, 0.4f, -20, new Color(0.75f, 0.75f, 0.85f, 1f), 2.5f, 8f, 4f);
+    }
+
+    private static void CreateParallaxLayer(string name, Sprite sprite, float speed, int order, Color tint, float y, float w, float h)
+    {
+        var go = new GameObject(name);
+        var layer = go.AddComponent<ParallaxLayer>();
+        layer.sprite = sprite;
+        layer.scrollSpeed = speed;
+        layer.sortingOrder = order;
+        layer.tint = tint;
+        layer.yPosition = y;
+        layer.tileWidth = w;
+        layer.tileHeight = h;
+    }
+
+    private static Sprite EnsureStripeSprite()
+    {
+        const string path = "Assets/Art/ParallaxStripe.png";
+        if (File.Exists(path))
+        {
+            var existing = AssetDatabase.LoadAllAssetsAtPath(path);
+            foreach (var a in existing) if (a is Sprite) return (Sprite)a;
+            return null;
+        }
+
+        if (!Directory.Exists("Assets/Art")) Directory.CreateDirectory("Assets/Art");
+
+        int size = 64;
+        var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                bool dark = (x / 8) % 2 == 0;
+                tex.SetPixel(x, y, dark ? new Color(0.25f, 0.25f, 0.3f, 1f) : new Color(0.45f, 0.45f, 0.5f, 1f));
+            }
+        }
+        tex.Apply();
+        File.WriteAllBytes(path, tex.EncodeToPNG());
+        Object.DestroyImmediate(tex);
+        AssetDatabase.ImportAsset(path);
+
+        var imp = (TextureImporter)AssetImporter.GetAtPath(path);
+        if (imp != null)
+        {
+            imp.textureType = TextureImporterType.Sprite;
+            imp.spriteImportMode = SpriteImportMode.Single;
+            imp.spritePixelsPerUnit = size;
+            imp.mipmapEnabled = false;
+            imp.filterMode = FilterMode.Bilinear;
+            imp.SaveAndReimport();
+        }
+
+        var assets = AssetDatabase.LoadAllAssetsAtPath(path);
+        foreach (var a in assets) if (a is Sprite) return (Sprite)a;
+        return null;
     }
 
     private static CameraController BuildCamera()

@@ -132,6 +132,7 @@ Assets/
     Obstacles/     Hazard, GroundEnemy
     Projectiles/   Projectile, ProjectileSpawner
     Generation/    LevelGenerator, ObstacleEntry, ChunkData, ChunkLibrary
+    Background/    ParallaxLayer
     Difficulty/    DifficultyDriver
     Data/          GameConfig, PlayerConfig, DifficultyProfile, ProjectileConfig (ScriptableObjects)
     Editor/        ConfigAssetGenerator, GameSceneBuilder (geram configs, prefabs e a cena)
@@ -255,5 +256,6 @@ Cada componente tem um campo `config` (ex: `GameConfig` no `GameManager`). Se va
 | 2026-08-23 | Indicador visual do parry (`ParryIndicator`): anel no ar (azul) que fica verde quando há projétil no alcance. |
 | 2026-08-23 | Parry agora dá **dash** e é limitado a **1 por pulo**; corrigida a checagem de chão (ignora o próprio colisor). |
 | 2026-08-23 | Suporte a animação do jogador (`PlayerAnimator`): expõe `IsGrounded`, `VelY`, `Speed` e trigger `Parry` ao Animator. |
+| 2026-08-23 | Sistema de parallax (`ParallaxLayer`, camadas com velocidade ajustável) + chão customizável (`groundSprite`) + resolução padrão 1920x1080. |
 | 2026-08-23 | Transição para prefabs + cena autorada (`GameSceneBuilder`): `Game.unity`, prefabs e sprite placeholder como assets reais. |
 | 2026-08-23 | Opções persistidas via `PlayerPrefs` (parry/combo/projéteis/slow-mo/shake/partículas/som + volume). |

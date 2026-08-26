@@ -11,6 +11,8 @@ public class LevelGenerator : MonoBehaviour
 
     [Header("Chao")]
     public Color groundColor = new Color(0.3f, 0.3f, 0.35f);
+    [Tooltip("Sprite do chao (opcional). Se definido, e desenhado em modo 'tiled'. Se vazio, usa uma cor solida.")]
+    public Sprite groundSprite;
     [Tooltip("Altura (Y) do topo do chao.")]
     public float groundY = 0f;
     [Tooltip("Espessura do chao.")]
@@ -147,8 +149,30 @@ public class LevelGenerator : MonoBehaviour
     {
         float centerX = startX + length * 0.5f;
         float centerY = groundY - groundHeight * 0.5f;
-        var go = PlaceholderFactory.CreateBox("Ground", groundColor, new Vector2(length, groundHeight), false);
+
+        var go = new GameObject("Ground");
         go.transform.position = new Vector3(centerX, centerY, 0f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        var col = go.AddComponent<BoxCollider2D>();
+
+        if (groundSprite != null)
+        {
+            sr.sprite = groundSprite;
+            sr.drawMode = SpriteDrawMode.Tiled;
+            sr.size = new Vector2(length, groundHeight);
+            sr.color = groundColor;
+            col.size = new Vector2(length, groundHeight);
+        }
+        else
+        {
+            sr.sprite = PlaceholderFactory.WhiteSprite;
+            sr.color = groundColor;
+            go.transform.localScale = new Vector3(length, groundHeight, 1f);
+            col.size = Vector2.one;
+        }
+
+        sr.sortingOrder = -10;
         _spawned.Add(go);
     }
 

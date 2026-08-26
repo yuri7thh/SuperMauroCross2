@@ -215,6 +215,26 @@ PrefabInstance:
       propertyPath: difficulty
       value: 
       objectReference: {fileID: 1627175052}
+    - target: {fileID: 4141641297026355658, guid: c4903f1a468c42b46958f9b8591f385c, type: 3}
+      propertyPath: m_Size.x
+      value: 2.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4141641297026355658, guid: c4903f1a468c42b46958f9b8591f385c, type: 3}
+      propertyPath: m_Size.y
+      value: 2.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4141641297026355658, guid: c4903f1a468c42b46958f9b8591f385c, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 5dfcccb9323f041469542b723a064ed5, type: 3}
+    - target: {fileID: 4141641297026355658, guid: c4903f1a468c42b46958f9b8591f385c, type: 3}
+      propertyPath: m_SortingOrder
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 4141641297026355658, guid: c4903f1a468c42b46958f9b8591f385c, type: 3}
+      propertyPath: m_WasSpriteAssigned
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4331141958879245632, guid: c4903f1a468c42b46958f9b8591f385c, type: 3}
       propertyPath: m_Name
       value: Player
@@ -478,27 +498,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelGenerator
   player: {fileID: 1074011081}
   difficulty: {fileID: 1627175052}
-  patternLibrary: {fileID: 0}
+  chunkLibrary: {fileID: 0}
   groundColor: {r: 0.3, g: 0.3, b: 0.35, a: 1}
+  groundSprite: {fileID: 0}
   groundY: 0
   groundHeight: 3
-  segmentMinLength: 6
-  segmentMaxLength: 14
-  pitMinLength: 2.5
-  pitMaxLength: 5
-  obstacles:
-  - template: {fileID: 7814177974241045262, guid: 99a368dcded5f7e4cb136b3e03cc9661, type: 3}
-    weight: 3
-    minDifficulty: 0
-    enabled: 1
-  - template: {fileID: 8361687908466844210, guid: 84aeacb56d6bff34c92fda86dc9f362d, type: 3}
-    weight: 2
-    minDifficulty: 0.15
-    enabled: 1
-  - template: {fileID: 5583015849492087504, guid: 275aed429d943b246b9611a0aa2a5c65, type: 3}
-    weight: 2
-    minDifficulty: 0.35
-    enabled: 1
+  fallbackLength: 12
   templates:
   - kind: 0
     template: {fileID: 7814177974241045262, guid: 99a368dcded5f7e4cb136b3e03cc9661, type: 3}
@@ -506,7 +511,6 @@ MonoBehaviour:
     template: {fileID: 8361687908466844210, guid: 84aeacb56d6bff34c92fda86dc9f362d, type: 3}
   - kind: 2
     template: {fileID: 5583015849492087504, guid: 275aed429d943b246b9611a0aa2a5c65, type: 3}
-  patternBias: 0.5
   spawnAhead: 60
   despawnBehind: 20
 --- !u!4 &1747567855

@@ -14,6 +14,10 @@ public static class ConfigAssetGenerator
         Ensure(typeof(DifficultyProfile), "DifficultyProfile");
         Ensure(typeof(ProjectileConfig), "ProjectileConfig");
         Ensure(typeof(ChunkLibrary), "ChunkLibrary");
+
+        PlayerSettings.defaultScreenWidth = 1920;
+        PlayerSettings.defaultScreenHeight = 1080;
+        PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
     }
 
     private static void Ensure(System.Type type, string name)
