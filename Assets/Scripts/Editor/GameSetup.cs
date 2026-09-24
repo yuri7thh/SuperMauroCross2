@@ -1,4 +1,6 @@
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEditor.SceneManagement;
@@ -19,7 +21,7 @@ public static class GameSetup
         EditorApplication.delayCall += EnsureAssets;
     }
 
-    private static void EnsureAssets()
+    public static void EnsureAssets()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) return;
 
@@ -28,7 +30,7 @@ public static class GameSetup
 
         EnsurePrefab("Player.prefab", () => BuildPlayer(white));
         EnsurePrefab("Spike.prefab", () => BuildObstacle("Spike", white, new Color(0.9f, 0.25f, 0.25f), new Vector2(1f, 0.5f), false));
-        EnsurePrefab("Wall.prefab", () => BuildObstacle("Wall", white, new Color(0.95f, 0.6f, 0.2f), new Vector2(1f, 1.8f), false));
+        EnsurePrefab("Wall.prefab", () => BuildObstacle("Wall", white, new Color(0.95f, 0.6f, 0.2f), new Vector2(1f, 1.8f), false, true, true));
         EnsurePrefab("GroundEnemy.prefab", () => BuildObstacle("GroundEnemy", white, new Color(0.7f, 0.3f, 0.8f), new Vector2(1f, 1.5f), true));
         EnsurePrefab("Projectile.prefab", () => BuildProjectile(white));
 
@@ -37,9 +39,16 @@ public static class GameSetup
         EnsureConfig(typeof(PlayerAnimationSet), "PlayerAnimationSet");
         EnsureConfig(typeof(DifficultyProfile), "DifficultyProfile");
         EnsureConfig(typeof(ProjectileConfig), "ProjectileConfig");
+        EnsureConfig(typeof(ObstacleConfig), "ObstacleConfig");
         EnsureConfig(typeof(ChunkLibrary), "ChunkLibrary");
 
+        EnsurePrefabComponent("Wall.prefab", typeof(ParryableObstacle));
+
         EnsurePlayerBaseController();
+        EnsureObstacleBaseController();
+        EnsureProjectileBaseController();
+        EnsureProjectilePrefabStructure();
+        EnsureProjectileAnimationClip();
 
         PlayerSettings.defaultScreenWidth = 1920;
         PlayerSettings.defaultScreenHeight = 1080;
@@ -78,6 +87,7 @@ public static class GameSetup
         EnsureLevelGenerator(player, difficulty, spikePrefab, wallPrefab, enemyPrefab);
         EnsureProjectileSpawner(difficulty, projectilePrefab);
         EnsureParallax(stripe);
+        UISetup.EnsureUI();
 
         EditorSceneManager.MarkSceneDirty(scene);
         Debug.Log("[SMC] Ensure Game Scene concluido (apenas adicionou o que faltava).");
@@ -228,11 +238,13 @@ public static class GameSetup
         return go;
     }
 
-    private static GameObject BuildObstacle(string name, Sprite white, Color color, Vector2 size, bool moving)
+    private static GameObject BuildObstacle(string name, Sprite white, Color color, Vector2 size, bool moving, bool destructibleByDash = false, bool parryable = false)
     {
         var go = PlaceholderFactory.CreateBox(name, color, size, true);
         go.GetComponent<SpriteRenderer>().sprite = white;
-        go.AddComponent<Hazard>();
+        var hazard = go.AddComponent<Hazard>();
+        hazard.destructibleByDash = destructibleByDash;
+        if (parryable) go.AddComponent<ParryableObstacle>();
         if (moving) go.AddComponent<GroundEnemy>();
         return go;
     }
@@ -308,6 +320,73 @@ public static class GameSetup
         Debug.Log("[SMC] Base controller gerado em " + BaseControllerPath);
     }
 
+    // ===================== Controller base dos obstaculos =====================
+    private const string ObstacleBaseControllerPath = "Assets/Resources/Configs/ObstacleStateController.controller";
+
+    private static void EnsureObstacleBaseController()
+    {
+        if (!Directory.Exists(ConfigFolder)) Directory.CreateDirectory(ConfigFolder);
+
+        var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(ObstacleBaseControllerPath);
+        if (controller == null)
+        {
+            controller = AnimatorController.CreateAnimatorControllerAtPath(ObstacleBaseControllerPath);
+            AssetDatabase.SaveAssets();
+        }
+
+        var animCtrl = controller as AnimatorController;
+        if (animCtrl == null) return;
+        var sm = animCtrl.layers[0].stateMachine;
+
+        AnimatorState idle = FindState(sm, "Idle");
+        if (idle == null)
+        {
+            idle = sm.AddState("Idle");
+            if (sm.defaultState == null) sm.defaultState = idle;
+        }
+
+        // O estado Idle precisa de um clip real para o AnimatorOverrideController conseguir sobrescrever.
+        if (idle.motion == null)
+        {
+            idle.motion = CreateObstacleIdleClip();
+            AssetDatabase.SaveAssets();
+            Debug.Log("[SMC] Controller de obstaculos com Idle valido em " + ObstacleBaseControllerPath);
+        }
+    }
+
+    private static AnimatorState FindState(AnimatorStateMachine sm, string name)
+    {
+        if (sm.states == null) return null;
+        foreach (var s in sm.states)
+            if (s.state != null && s.state.name == name) return s.state;
+        return null;
+    }
+
+    private static AnimationClip CreateObstacleIdleClip()
+    {
+        const string path = "Assets/Resources/Configs/ObstacleIdle.anim";
+        var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
+        if (existing != null) return existing;
+
+        var clip = new AnimationClip();
+        clip.name = "Idle";
+
+        var sprite = LoadSprite("Assets/Art/White.png");
+        if (sprite != null)
+        {
+            var binding = EditorCurveBinding.PPtrCurve("", typeof(SpriteRenderer), "m_Sprite");
+            var frames = new ObjectReferenceKeyframe[]
+            {
+                new ObjectReferenceKeyframe { time = 0f, value = sprite }
+            };
+            AnimationUtility.SetObjectReferenceCurve(clip, binding, frames);
+        }
+
+        AssetDatabase.CreateAsset(clip, path);
+        AssetDatabase.SaveAssets();
+        return clip;
+    }
+
     private static AnimationClip LoadClip(string path)
     {
         return AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
@@ -318,6 +397,150 @@ public static class GameSetup
         var state = sm.AddState(name);
         state.motion = clip;
         if (sm.defaultState == null) sm.defaultState = state;
+    }
+
+    // ===================== Controller/visual do projetil =====================
+    private const string ProjectileBaseControllerPath = "Assets/Resources/Configs/ProjectileStateController.controller";
+    private const string ProjectilePlaceholderClipPath = "Assets/Resources/Configs/ProjectileSpin.anim";
+
+    private static void EnsureProjectileBaseController()
+    {
+        if (File.Exists(ProjectileBaseControllerPath)) return;
+        if (!Directory.Exists(ConfigFolder)) Directory.CreateDirectory(ConfigFolder);
+
+        var clip = EnsureProjectilePlaceholderClip();
+        var controller = AnimatorController.CreateAnimatorControllerAtPath(ProjectileBaseControllerPath);
+        var sm = controller.layers[0].stateMachine;
+        AddState(sm, "Spin", clip);
+
+        AssetDatabase.SaveAssets();
+        Debug.Log("[SMC] Base controller do projetil gerado em " + ProjectileBaseControllerPath);
+    }
+
+    private static AnimationClip EnsureProjectilePlaceholderClip()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<AnimationClip>(ProjectilePlaceholderClipPath);
+        if (existing != null) return existing;
+        if (!Directory.Exists(ConfigFolder)) Directory.CreateDirectory(ConfigFolder);
+
+        Sprite white = EnsureWhiteSprite();
+        var clip = new AnimationClip();
+        clip.name = "ProjectileSpin";
+        clip.wrapMode = WrapMode.Loop;
+
+        var binding = new EditorCurveBinding
+        {
+            path = "Visual",
+            type = typeof(SpriteRenderer),
+            propertyName = "m_Sprite"
+        };
+        var keyframes = new[]
+        {
+            new ObjectReferenceKeyframe { time = 0f, value = white },
+            new ObjectReferenceKeyframe { time = 0.1f, value = white }
+        };
+        AnimationUtility.SetObjectReferenceCurve(clip, binding, keyframes);
+
+        AssetDatabase.CreateAsset(clip, ProjectilePlaceholderClipPath);
+        return clip;
+    }
+
+    private static void EnsureProjectilePrefabStructure()
+    {
+        const string path = "Assets/Prefabs/Projectile.prefab";
+        if (!File.Exists(path)) return;
+
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        if (prefab == null) return;
+
+        foreach (Transform child in prefab.transform)
+        {
+            if (child.name == "Visual") return;
+        }
+
+        var contents = PrefabUtility.LoadPrefabContents(path);
+        var root = contents.transform;
+
+        var visual = new GameObject("Visual");
+        visual.transform.SetParent(root, false);
+
+        var sr = root.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            var visualSr = visual.AddComponent<SpriteRenderer>();
+            visualSr.sprite = sr.sprite;
+            visualSr.color = Color.white;
+            visualSr.sortingOrder = sr.sortingOrder;
+            Object.DestroyImmediate(sr);
+        }
+
+        if (contents.GetComponent<Animator>() == null)
+            contents.AddComponent<Animator>();
+
+        PrefabUtility.SaveAsPrefabAsset(contents, path);
+        PrefabUtility.UnloadPrefabContents(contents);
+        Debug.Log("[SMC] Projectile.prefab: estrutura 'Visual' criada (sprite movido para o filho, Animator na raiz).");
+    }
+
+    [MenuItem("SMC/Rebuild Projectile Clip")]
+    public static void RebuildProjectileClip()
+    {
+        EnsureProjectileAnimationClip();
+    }
+
+    private static void EnsureProjectileAnimationClip()
+    {
+        const string prefabPath = "Assets/Prefabs/Projectile.prefab";
+        if (!File.Exists(prefabPath)) return;
+
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        if (prefab == null) return;
+
+        var proj = prefab.GetComponent<Projectile>();
+        if (proj == null || proj.animation == null) return;
+        if (!proj.animation.empty) return; // ja tem frames
+
+        string clipPath = AssetDatabase.GetAssetPath(proj.animation);
+        string folder = Path.GetDirectoryName(clipPath);
+        if (string.IsNullOrEmpty(folder)) return;
+
+        var sprites = AssetDatabase.FindAssets("t:Sprite", new[] { folder })
+            .Select(guid => AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GUIDToAssetPath(guid)))
+            .Where(s => s != null)
+            .OrderBy(SpriteFrameNumber)
+            .ToArray();
+        if (sprites.Length == 0) return;
+
+        const float fps = 12f;
+        var binding = new EditorCurveBinding
+        {
+            path = "Visual",
+            type = typeof(SpriteRenderer),
+            propertyName = "m_Sprite"
+        };
+        var keyframes = new ObjectReferenceKeyframe[sprites.Length];
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            keyframes[i] = new ObjectReferenceKeyframe
+            {
+                time = i / fps,
+                value = sprites[i]
+            };
+        }
+
+        AnimationUtility.SetObjectReferenceCurve(proj.animation, binding, keyframes);
+        var settings = AnimationUtility.GetAnimationClipSettings(proj.animation);
+        settings.loopTime = true;
+        AnimationUtility.SetAnimationClipSettings(proj.animation, settings);
+        EditorUtility.SetDirty(proj.animation);
+        AssetDatabase.SaveAssets();
+        Debug.Log("[SMC] Clip '" + proj.animation.name + "' reconstruido com " + sprites.Length + " frames (Visual, " + fps + " fps, loop).");
+    }
+
+    private static int SpriteFrameNumber(Sprite s)
+    {
+        var m = Regex.Match(s.name, @"(\d+)");
+        return m.Success ? int.Parse(m.Value) : int.MaxValue;
     }
 
     // ===================== Sprites placeholder =====================

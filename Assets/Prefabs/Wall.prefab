@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6683222034030768976}
   - component: {fileID: 6889537670128071107}
   - component: {fileID: 1630439110179923724}
+  - component: {fileID: 3244190569219761577}
   m_Layer: 0
   m_Name: Wall
   m_TagString: Untagged
@@ -152,3 +153,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Hazard
   killOnContact: 1
+  destructibleByDash: 1
+--- !u!114 &3244190569219761577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8361687908466844210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e79fe05c7db65684fa29aef67bd38762, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ParryableObstacle

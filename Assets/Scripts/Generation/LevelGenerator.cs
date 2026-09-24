@@ -8,6 +8,8 @@ public class LevelGenerator : MonoBehaviour
     public DifficultyDriver difficulty;
     [Tooltip("Biblioteca de chunks. Se vazio, carrega de Resources/Configs/ChunkLibrary.")]
     public ChunkLibrary chunkLibrary;
+    [Tooltip("Config visual dos obstaculos (sprite/hitbox/cor). Se vazio, carrega de Resources/Configs/ObstacleConfig.")]
+    public ObstacleConfig obstacleConfig;
 
     [Header("Chao")]
     public Color groundColor = new Color(0.3f, 0.3f, 0.35f);
@@ -20,6 +22,16 @@ public class LevelGenerator : MonoBehaviour
     [Tooltip("Comprimento de chao usado se nenhum chunk estiver disponivel.")]
     public float fallbackLength = 12f;
 
+    [Header("Grama (decoracao no topo do chao)")]
+    [Tooltip("Sprites da grama. 1 sprite = faixa continua (tiled) em qualquer tamanho; varios sprites = tufos sorteados ao longo do topo. Se vazio, nao gera grama.")]
+    public List<Sprite> grassSprites = new List<Sprite>();
+    [Tooltip("Altura da faixa de grama quando ha apenas um sprite.")]
+    public float grassHeight = 0.5f;
+    [Tooltip("Cor/tint da grama.")]
+    public Color grassColor = Color.white;
+    [Tooltip("Ordem de renderizacao da grama (acima do chao, abaixo dos obstaculos).")]
+    public int grassSortingOrder = -9;
+
     [Header("Obstaculos")]
     [Tooltip("Mapa de tipo de obstaculo -> template.")]
     public List<TemplateEntry> templates = new List<TemplateEntry>();
@@ -31,6 +43,7 @@ public class LevelGenerator : MonoBehaviour
     private float _nextX;
     private readonly List<GameObject> _spawned = new List<GameObject>();
     private Dictionary<ObstacleKind, GameObject> _templateMap;
+    private RuntimeAnimatorController _obstacleBaseController;
 
     [System.Serializable]
     public class TemplateEntry
@@ -50,6 +63,11 @@ public class LevelGenerator : MonoBehaviour
         if (chunkLibrary == null)
         {
             chunkLibrary = Resources.Load<ChunkLibrary>("Configs/ChunkLibrary");
+        }
+
+        if (obstacleConfig == null)
+        {
+            obstacleConfig = Resources.Load<ObstacleConfig>("Configs/ObstacleConfig");
         }
 
         BuildTemplateMap();
@@ -174,6 +192,69 @@ public class LevelGenerator : MonoBehaviour
 
         sr.sortingOrder = -10;
         _spawned.Add(go);
+
+        if (grassSprites != null && grassSprites.Count > 0) SpawnGrass(startX, length);
+    }
+
+    private void SpawnGrass(float startX, float length)
+    {
+        if (grassSprites.Count == 1)
+        {
+            SpawnGrassStrip(startX, length, grassSprites[0]);
+        }
+        else
+        {
+            SpawnGrassTufts(startX, length);
+        }
+    }
+
+    private void SpawnGrassStrip(float startX, float length, Sprite sprite)
+    {
+        float centerX = startX + length * 0.5f;
+        var go = new GameObject("Grass");
+        go.transform.position = new Vector3(centerX, groundY + grassHeight * 0.5f, 0f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite;
+        sr.drawMode = SpriteDrawMode.Tiled;
+        sr.size = new Vector2(length, grassHeight);
+        sr.color = grassColor;
+        sr.sortingOrder = grassSortingOrder;
+
+        _spawned.Add(go);
+    }
+
+    private void SpawnGrassTufts(float startX, float length)
+    {
+        float endX = startX + length;
+        float x = startX;
+        int guard = 0;
+        while (x < endX - 0.01f && guard < 200)
+        {
+            var sprite = grassSprites[Random.Range(0, grassSprites.Count)];
+            float w = sprite.bounds.size.x;
+            if (w <= 0.0001f) w = 0.5f;
+            float h = sprite.bounds.size.y;
+            if (h <= 0.0001f) h = grassHeight;
+
+            SpawnGrassTuft(sprite, x + w * 0.5f, groundY + h * 0.5f);
+
+            x += w;
+            guard++;
+        }
+    }
+
+    private void SpawnGrassTuft(Sprite sprite, float centerX, float centerY)
+    {
+        var go = new GameObject("Grass");
+        go.transform.position = new Vector3(centerX, centerY, 0f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = sprite;
+        sr.color = grassColor;
+        sr.sortingOrder = grassSortingOrder;
+
+        _spawned.Add(go);
     }
 
     private void SpawnTemplate(ObstacleKind kind, float x)
@@ -183,8 +264,124 @@ public class LevelGenerator : MonoBehaviour
 
         var go = Instantiate(template, new Vector3(x, groundY, 0f), Quaternion.identity);
         go.SetActive(true);
+        ConfigureObstacle(go, kind);
         SnapToGround(go);
         _spawned.Add(go);
+    }
+
+    private void ConfigureObstacle(GameObject go, ObstacleKind kind)
+    {
+        if (obstacleConfig == null) return;
+        var entry = obstacleConfig.Get(kind);
+        if (entry == null) return;
+
+        var rootSr = go.GetComponent<SpriteRenderer>();
+        Sprite prefabSprite = rootSr != null ? rootSr.sprite : null;
+        int sortOrder = rootSr != null ? rootSr.sortingOrder : 0;
+        int sortLayer = rootSr != null ? rootSr.sortingLayerID : 0;
+        if (rootSr != null)
+        {
+            rootSr.enabled = false;
+            Destroy(rootSr);
+        }
+
+        Transform visual = go.transform.Find("Visual");
+        if (visual == null)
+        {
+            var vgo = new GameObject("Visual");
+            visual = vgo.transform;
+            visual.SetParent(go.transform, false);
+            visual.localPosition = Vector3.zero;
+        }
+
+        var sr = visual.GetComponent<SpriteRenderer>();
+        if (sr == null) sr = visual.gameObject.AddComponent<SpriteRenderer>();
+        sr.sortingOrder = sortOrder;
+        sr.sortingLayerID = sortLayer;
+        sr.color = entry.color;
+
+        var anim = visual.GetComponent<Animator>();
+        RuntimeAnimatorController runtime = ResolveObstacleController(entry);
+        if (runtime != null)
+        {
+            if (anim == null) anim = visual.gameObject.AddComponent<Animator>();
+            anim.runtimeAnimatorController = runtime;
+            sr.enabled = true;
+            sr.sprite = entry.sprite != null ? entry.sprite : prefabSprite;
+        }
+        else
+        {
+            if (anim != null) Destroy(anim);
+            sr.enabled = true;
+            sr.sprite = entry.sprite != null ? entry.sprite : prefabSprite;
+        }
+
+        visual.localScale = new Vector3(entry.spriteSize.x, entry.spriteSize.y, 1f);
+
+        ConfigureCollider(go, entry);
+
+        var gizmo = go.GetComponent<ObstacleHitboxGizmo>();
+        if (gizmo == null) gizmo = go.AddComponent<ObstacleHitboxGizmo>();
+        gizmo.SetShow(obstacleConfig.showHitboxes && entry.showHitbox);
+    }
+
+    private RuntimeAnimatorController ResolveObstacleController(ObstacleConfig.ObstacleEntry entry)
+    {
+        if (entry.animatorController != null) return entry.animatorController;
+
+        if (entry.idle != null)
+        {
+            if (_obstacleBaseController == null)
+                _obstacleBaseController = Resources.Load<RuntimeAnimatorController>("Configs/ObstacleStateController");
+
+            if (_obstacleBaseController != null)
+            {
+                var overrides = new AnimatorOverrideController(_obstacleBaseController);
+                overrides["Idle"] = entry.idle;
+                return overrides;
+            }
+        }
+
+        return null;
+    }
+
+    private void ConfigureCollider(GameObject go, ObstacleConfig.ObstacleEntry entry)
+    {
+        Collider2D existing = go.GetComponent<Collider2D>();
+
+        if (entry.hitboxShape == HitboxShape.Box)
+        {
+            var box = go.GetComponent<BoxCollider2D>();
+            if (box == null)
+            {
+                if (existing != null) { existing.enabled = false; Destroy(existing); }
+                box = go.AddComponent<BoxCollider2D>();
+            }
+            box.isTrigger = true;
+            box.size = entry.hitboxSize;
+            box.offset = entry.hitboxOffset;
+        }
+        else
+        {
+            var poly = go.GetComponent<PolygonCollider2D>();
+            if (poly == null)
+            {
+                if (existing != null) { existing.enabled = false; Destroy(existing); }
+                poly = go.AddComponent<PolygonCollider2D>();
+            }
+            poly.isTrigger = true;
+            poly.offset = entry.hitboxOffset;
+            float hw = entry.hitboxSize.x * 0.5f;
+            float hh = entry.hitboxSize.y * 0.5f;
+            poly.points = new Vector2[]
+            {
+                new Vector2(-hw, -hh),
+                new Vector2(hw, -hh),
+                new Vector2(0f, hh)
+            };
+        }
+
+        go.transform.localScale = Vector3.one;
     }
 
     private void BuildTemplateMap()

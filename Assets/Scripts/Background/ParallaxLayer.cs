@@ -16,8 +16,12 @@ public class ParallaxLayer : MonoBehaviour
     [Range(0f, 2f)] public float scrollSpeed = 0.3f;
     [Tooltip("Ordem de renderizacao (menor = mais atras).")]
     public int sortingOrder = -20;
-    [Tooltip("Posicao vertical da camada.")]
+    [Tooltip("Posicao vertical da camada (altura acima do topo do chao quando followGround esta ligado).")]
     public float yPosition = 0f;
+    [Tooltip("Se ligado, a camada acompanha o topo do chao (LevelGenerator.groundY).")]
+    public bool followGround = true;
+    [Tooltip("Y do topo do chao (atualizado pelo ParallaxBackground).")]
+    public float groundY = 0f;
 
     private readonly List<SpriteRenderer> _tiles = new List<SpriteRenderer>();
     private Camera _cam;
@@ -73,7 +77,8 @@ public class ParallaxLayer : MonoBehaviour
         {
             float idealX = i * _tw + offset;
             float x = windowStart + Mathf.Repeat(idealX - windowStart, totalW);
-            _tiles[i].transform.position = new Vector3(x, yPosition, 0f);
+            float y = followGround ? groundY + yPosition : yPosition;
+            _tiles[i].transform.position = new Vector3(x, y, 0f);
         }
     }
 }

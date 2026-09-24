@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour
 
     public bool IsGrounded { get; private set; }
     public bool IsAirborne => !IsGrounded;
+    public bool IsDashing => _dashTimer > 0f;
 
     public event System.Action JumpStarted;
 
@@ -44,9 +45,16 @@ public class PlayerController : MonoBehaviour
     private float _coyoteTimer;
     private float _jumpBufferTimer;
     private float _dashTimer;
+    private float _dashSpeed;
+    private Vector2 _dashDir = Vector2.right;
     private bool _hasParried;
+    private bool _canAirJump;
+    private bool _pendingParryJump;
+    private Vector2 _parryJumpTarget;
+    private float _parryDecelTimer;
     private ParryIndicator _indicator;
     private PlayerAnimator _playerAnimator;
+    private Camera _cam;
 
     void Awake()
     {
@@ -60,6 +68,7 @@ public class PlayerController : MonoBehaviour
         _rb.freezeRotation = true;
         _input = FindFirstObjectByType<InputReader>();
         _feedback = FindFirstObjectByType<FeedbackManager>();
+        _cam = Camera.main;
 
         if (GetComponent<ParryIndicator>() == null)
             gameObject.AddComponent<ParryIndicator>();
@@ -77,7 +86,22 @@ public class PlayerController : MonoBehaviour
 
         if (_input != null && _input.JumpPressed)
         {
-            _jumpBufferTimer = Config.jumpBufferTime;
+            if (IsAirborne && _canAirJump)
+            {
+                Jump();
+                _canAirJump = false;
+                _jumpBufferTimer = 0f;
+                _coyoteTimer = 0f;
+            }
+            else
+            {
+                _jumpBufferTimer = Config.jumpBufferTime;
+            }
+        }
+
+        if (_input != null && _input.JumpReleased && Config.jumpCutEnabled && _rb != null && _rb.linearVelocity.y > 0f)
+        {
+            _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, _rb.linearVelocity.y * Config.jumpCutMultiplier);
         }
 
         if (_input != null && _input.ParryPressed)
@@ -93,6 +117,18 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        if (_input != null && _input.ParryJumpPressed)
+        {
+            Debug.Log("[ParryJump] L pressionado | noAr=" + IsAirborne + " | jaUsouNestePulo=" + _hasParried);
+            if (gm.ParryEnabled && IsAirborne && !_hasParried)
+            {
+                _hasParried = true;
+                AudioManager.Instance?.PlayParryInput();
+                if (_indicator != null) _indicator.Flash();
+                TryParryJump();
+            }
+        }
+
         if (transform.position.y < Config.killY)
         {
             gm.GameOver();
@@ -104,17 +140,86 @@ public class PlayerController : MonoBehaviour
         var gm = GameManager.Instance;
         bool playing = gm != null && gm.State == GameState.Playing;
 
-        if (_dashTimer > 0f) _dashTimer -= Time.fixedDeltaTime;
-        float speed = _dashTimer > 0f
-            ? Config.dashSpeed
-            : (difficulty != null ? difficulty.Speed : Config.baseSpeed);
+        IsGrounded = CheckGround();
+
+        float topLimit = GetCameraTopLimit();
+        bool hitTop = Config.clampToCameraTop && topLimit != float.MaxValue && transform.position.y >= topLimit;
+
+        if (_dashTimer > 0f && (IsGrounded || hitTop))
+        {
+            _dashTimer = 0f;
+            _pendingParryJump = false;
+            if (hitTop && _rb.linearVelocity.y > 0f)
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, 0f);
+        }
+
+        if (_dashTimer > 0f)
+        {
+            _dashTimer -= Time.fixedDeltaTime;
+
+            bool jumpNow = false;
+            if (_pendingParryJump)
+            {
+                Vector2 toTarget = _parryJumpTarget - (Vector2)transform.position;
+                jumpNow = Vector2.Dot(toTarget, _dashDir) <= 0f;
+            }
+
+            if (jumpNow || _dashTimer <= 0f)
+            {
+                _dashTimer = 0f;
+                if (_pendingParryJump)
+                {
+                    _pendingParryJump = false;
+                    _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, Config.parryJumpVelocity);
+                    _parryDecelTimer = Config.parryJumpDecelerationTime;
+                    AudioManager.Instance?.PlayJump();
+                    JumpStarted?.Invoke();
+                }
+            }
+        }
+
+        if (Config.rotateSpriteWithDash && _dashTimer <= 0f && Quaternion.Angle(transform.rotation, Quaternion.identity) > 0.1f)
+        {
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.identity, Config.dashRotateResetSpeed * Time.fixedDeltaTime);
+        }
 
         if (playing)
-            _rb.linearVelocity = new Vector2(speed, _rb.linearVelocity.y);
-        else
-            _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
+        {
+            if (_dashTimer > 0f)
+            {
+                _rb.gravityScale = 0f;
+                _rb.linearVelocity = _dashDir * _dashSpeed;
+            }
+            else
+            {
+                _rb.gravityScale = Config.gravityScale;
+                float speed = difficulty != null ? difficulty.Speed : Config.baseSpeed;
+                if (Config.slowInAir && IsAirborne)
+                    speed *= Config.airSpeedMultiplier;
 
-        IsGrounded = CheckGround();
+                if (_parryDecelTimer > 0f)
+                {
+                    _parryDecelTimer -= Time.fixedDeltaTime;
+                    speed *= (1f - Config.parryJumpVerticality);
+                    speed *= Config.parryJumpDeceleration;
+                }
+
+                _rb.linearVelocity = new Vector2(speed, _rb.linearVelocity.y);
+            }
+        }
+        else
+        {
+            _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
+        }
+
+        if (Config.clampToCameraTop && topLimit != float.MaxValue && _rb.position.y > topLimit)
+        {
+            Vector2 p = _rb.position;
+            p.y = topLimit;
+            _rb.position = p;
+            if (_rb.linearVelocity.y > 0f)
+                _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, 0f);
+        }
 
         if (playing)
         {
@@ -122,6 +227,7 @@ public class PlayerController : MonoBehaviour
             {
                 _coyoteTimer = Config.coyoteTime;
                 _hasParried = false;
+                _canAirJump = false;
             }
             else _coyoteTimer -= Time.fixedDeltaTime;
 
@@ -140,6 +246,12 @@ public class PlayerController : MonoBehaviour
             gm.SetDistance(transform.position.x);
     }
 
+    private float GetCameraTopLimit()
+    {
+        if (_cam == null || !_cam.orthographic) return float.MaxValue;
+        return _cam.transform.position.y + _cam.orthographicSize - Config.cameraTopMargin;
+    }
+
     private void Jump()
     {
         _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, Config.jumpVelocity);
@@ -147,9 +259,21 @@ public class PlayerController : MonoBehaviour
         JumpStarted?.Invoke();
     }
 
-    private void Dash()
+    private void Dash(Vector2 targetPos)
     {
+        Vector2 toTarget = targetPos - (Vector2)transform.position;
+        float dist = toTarget.magnitude;
+        float travel = Mathf.Max(dist, Config.dashDistance);
+
         _dashTimer = Config.dashDuration;
+        _dashSpeed = travel / Mathf.Max(0.01f, Config.dashDuration);
+        _dashDir = dist > 0.0001f ? toTarget / dist : Vector2.right;
+
+        if (Config.rotateSpriteWithDash)
+        {
+            float angle = Mathf.Atan2(_dashDir.y, _dashDir.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0f, 0f, angle);
+        }
     }
 
     private bool CheckGround()
@@ -176,34 +300,111 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        var cols = Physics2D.OverlapCircleAll(transform.position, Config.parryRange);
-        Projectile closest = null;
-        float best = float.MaxValue;
-        int count = 0;
-        foreach (var c in cols)
+        var target = FindNearestParryTarget();
+        if (target != null)
         {
-            var p = c.GetComponentInParent<Projectile>();
-            if (p == null || p.IsParried) continue;
-            count++;
-            if (p.transform.position.x < transform.position.x - 0.5f) continue;
-
-            float d = (p.transform.position - transform.position).sqrMagnitude;
-            if (d < best) { best = d; closest = p; }
-        }
-
-        if (closest != null)
-        {
-            closest.Parry();
-            if (GameManager.Instance != null) GameManager.Instance.RegisterParry();
-            if (_feedback != null) _feedback.TriggerParryFeedback(transform.position);
-            AudioManager.Instance?.PlayParry();
-            Dash();
-            if (_playerAnimator != null) _playerAnimator.TriggerParry();
-            Debug.Log("[Parry] SUCESSO! combo=" + (GameManager.Instance != null ? GameManager.Instance.Combo.ToString() : "?"));
+            var p = target.GetComponentInParent<IParryable>();
+            if (p != null)
+            {
+                ParryTarget(p);
+                Debug.Log("[Parry] SUCESSO! combo=" + (GameManager.Instance != null ? GameManager.Instance.Combo.ToString() : "?"));
+            }
         }
         else
         {
-            Debug.Log("[Parry] sem projetil no alcance | projeteis vistos=" + count + " | raio=" + Config.parryRange);
+            Debug.Log("[Parry] sem alvo no alcance | raio=" + Config.parryRange);
         }
+    }
+
+    private void TryParryJump()
+    {
+        if (!IsAirborne)
+        {
+            Debug.Log("[ParryJump] tentativa ignorada: jogador no chao");
+            return;
+        }
+
+        var target = FindNearestParryTarget();
+        if (target != null)
+        {
+            var p = target.GetComponentInParent<IParryable>();
+            if (p != null)
+            {
+                ParryTargetJump(p);
+                Debug.Log("[ParryJump] SUCESSO! combo=" + (GameManager.Instance != null ? GameManager.Instance.Combo.ToString() : "?"));
+            }
+        }
+        else
+        {
+            Debug.Log("[ParryJump] sem alvo no alcance | raio=" + Config.parryRange);
+        }
+    }
+
+    private void ApplyParryEffects(IParryable target)
+    {
+        target.Parry();
+        _hasParried = false;
+        _canAirJump = true;
+        if (GameManager.Instance != null) GameManager.Instance.RegisterParry();
+        if (_feedback != null) _feedback.TriggerParryFeedback(transform.position);
+        AudioManager.Instance?.PlayParry();
+        if (_playerAnimator != null) _playerAnimator.TriggerParry();
+    }
+
+    private void ParryTarget(IParryable target)
+    {
+        var targetTransform = (target as Component).transform;
+        Vector2 targetPos = targetTransform.position;
+
+        ApplyParryEffects(target);
+
+        Dash(targetPos);
+    }
+
+    private void ParryTargetJump(IParryable target)
+    {
+        var targetTransform = (target as Component).transform;
+        Vector2 targetPos = targetTransform.position;
+
+        ApplyParryEffects(target);
+
+        Dash(targetPos);
+        _pendingParryJump = true;
+        _parryJumpTarget = targetPos;
+    }
+
+    // Enquanto escorrega (dash) depois de um parry, faz parry automatico em qualquer
+    // coisa parryable que estiver no trajeto, mantendo a corrente.
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (!IsDashing) return;
+
+        var p = other.GetComponentInParent<IParryable>();
+        if (p == null || p.IsParried) return;
+        if (other.transform.position.x < transform.position.x - 0.5f) return;
+
+        ParryTarget(p);
+        Debug.Log("[Parry] CADEIA no dash! combo=" + (GameManager.Instance != null ? GameManager.Instance.Combo.ToString() : "?"));
+    }
+
+    /// <summary>
+    /// Encontra o alvo de parry mais proximo na frente do jogador (ignora o que esta atras),
+    /// dentro do raio de parry configurado. Usado tanto pelo parry em si quanto pelo indicador.
+    /// </summary>
+    public Collider2D FindNearestParryTarget()
+    {
+        var cols = Physics2D.OverlapCircleAll(transform.position, Config.parryRange);
+        Collider2D best = null;
+        float bestDist = float.MaxValue;
+        foreach (var c in cols)
+        {
+            var p = c.GetComponentInParent<IParryable>();
+            if (p == null || p.IsParried) continue;
+            if (c.transform.position.x < transform.position.x - 0.5f) continue;
+
+            float d = (c.transform.position - transform.position).sqrMagnitude;
+            if (d < bestDist) { bestDist = d; best = c; }
+        }
+        return best;
     }
 }

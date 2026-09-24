@@ -17,8 +17,10 @@ public class ParallaxLayerConfig
     [Range(0f, 2f)] public float scrollSpeed = 0.3f;
     [Tooltip("Ordem de renderizacao (menor = mais atras).")]
     public int sortingOrder = -20;
-    [Tooltip("Posicao vertical da camada.")]
+    [Tooltip("Posicao vertical da camada (altura acima do topo do chao quando followGround esta ligado).")]
     public float yPosition = 0f;
+    [Tooltip("Se ligado, a camada acompanha o topo do chao (LevelGenerator.groundY).")]
+    public bool followGround = true;
     [Tooltip("Se desligado, esta camada nao aparece.")]
     public bool enabled = true;
 }
@@ -28,11 +30,30 @@ public class ParallaxBackground : MonoBehaviour
     [Tooltip("Lista de camadas. Adicione/remova/ordene aqui e ajuste cada uma no proprio item.")]
     public List<ParallaxLayerConfig> layers = new List<ParallaxLayerConfig>();
 
+    [Tooltip("LevelGenerator que define o topo do chao (groundY). Se vazio, procura na cena.")]
+    public LevelGenerator levelGenerator;
+
     private readonly List<ParallaxLayer> _spawned = new List<ParallaxLayer>();
+    private LevelGenerator _levelGen;
 
     void Start()
     {
+        _levelGen = levelGenerator != null ? levelGenerator : FindFirstObjectByType<LevelGenerator>();
         Rebuild();
+    }
+
+    void Update()
+    {
+        float gy = CurrentGroundY();
+        foreach (var l in _spawned)
+        {
+            if (l != null) l.groundY = gy;
+        }
+    }
+
+    private float CurrentGroundY()
+    {
+        return _levelGen != null ? _levelGen.groundY : 0f;
     }
 
     [ContextMenu("Rebuild")]
@@ -55,6 +76,8 @@ public class ParallaxBackground : MonoBehaviour
             layer.scrollSpeed = cfg.scrollSpeed;
             layer.sortingOrder = cfg.sortingOrder;
             layer.yPosition = cfg.yPosition;
+            layer.followGround = cfg.followGround;
+            layer.groundY = CurrentGroundY();
 
             _spawned.Add(layer);
         }

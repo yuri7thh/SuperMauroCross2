@@ -36,6 +36,7 @@ public class DifficultyDriver : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
         float t = Mathf.Clamp01(GameManager.Instance.Distance / Mathf.Max(1f, Config.difficultyRampDistance));
-        Difficulty = Config.difficultyCurve.Evaluate(t);
+        float raw = Config.difficultyCurve.Evaluate(t);
+        Difficulty = Mathf.Clamp01(Config.difficultyStartOffset + (1f - Config.difficultyStartOffset) * raw);
     }
 }

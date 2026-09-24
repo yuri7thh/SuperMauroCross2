@@ -5,7 +5,7 @@ public class ProjectileSpawner : MonoBehaviour
     [Header("Config")]
     [Tooltip("Modelo do projetil (prefab/template).")]
     public GameObject projectileTemplate;
-    [Tooltip("Driver de dificuldade (controla o intervalo).")]
+    [Tooltip("Driver de dificuldade (nao usado atualmente; reservado).")]
     public DifficultyDriver difficulty;
 
     [Tooltip("Config do projetil. Se vazio, carrega de Resources/Configs/ProjectileConfig ou usa padroes.")]
@@ -14,6 +14,8 @@ public class ProjectileSpawner : MonoBehaviour
     private ProjectileConfig _loadedConfig;
     private Transform _player;
     private float _timer;
+    private float _lastSpawnY;
+    private bool _hasLastSpawnY;
 
     public ProjectileConfig Config
     {
@@ -36,7 +38,7 @@ public class ProjectileSpawner : MonoBehaviour
     {
         var pc = FindFirstObjectByType<PlayerController>();
         if (pc != null) _player = pc.transform;
-        _timer = Config.baseInterval;
+        _timer = Random.Range(Config.spawnIntervalMin, Config.spawnIntervalMax);
     }
 
     void Update()
@@ -46,13 +48,11 @@ public class ProjectileSpawner : MonoBehaviour
         if (!gm.ProjectilesEnabled) return;
         if (projectileTemplate == null || _player == null) return;
 
-        float interval = difficulty != null ? difficulty.ProjectileInterval : Config.baseInterval;
-
         _timer -= Time.deltaTime;
         if (_timer <= 0f)
         {
             Spawn();
-            _timer = Mathf.Max(0.2f, interval);
+            _timer = Random.Range(Config.spawnIntervalMin, Config.spawnIntervalMax);
         }
     }
 
@@ -60,7 +60,7 @@ public class ProjectileSpawner : MonoBehaviour
     {
         Vector3 pos = new Vector3(
             _player.position.x + Config.spawnDistance,
-            Config.spawnHeight + Random.Range(-Config.heightVariance, Config.heightVariance),
+            PickSpawnY(),
             0f);
 
         GameObject go;
@@ -74,6 +74,35 @@ public class ProjectileSpawner : MonoBehaviour
 
         var proj = go.GetComponent<Projectile>();
         if (proj != null)
-            proj.speed = difficulty != null ? difficulty.ProjectileSpeed : Config.speed;
+            proj.speed = Random.Range(Config.speedMin, Config.speedMax);
+    }
+
+    private float PickSpawnY()
+    {
+        float min = Config.spawnHeight - Config.heightVariance;
+        float max = Config.spawnHeight + Config.heightVariance;
+
+        float y = Random.Range(min, max);
+
+        if (_hasLastSpawnY)
+        {
+            float sep = Mathf.Max(0f, Config.minYSeparation);
+            if (Mathf.Abs(y - _lastSpawnY) < sep)
+            {
+                bool canUp = _lastSpawnY + sep <= max;
+                bool canDown = _lastSpawnY - sep >= min;
+
+                if (canUp && canDown)
+                    y = (Random.value >= 0.5f) ? _lastSpawnY + sep : _lastSpawnY - sep;
+                else if (canUp)
+                    y = _lastSpawnY + sep;
+                else if (canDown)
+                    y = _lastSpawnY - sep;
+            }
+        }
+
+        _lastSpawnY = y;
+        _hasLastSpawnY = true;
+        return y;
     }
 }

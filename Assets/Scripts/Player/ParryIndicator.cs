@@ -2,13 +2,17 @@ using UnityEngine;
 
 public class ParryIndicator : MonoBehaviour
 {
+    private const float LineHeight = 0.25f;
+
     private GameObject _ring;
     private SpriteRenderer _ringSr;
+    private GameObject _lineGo;
+    private SpriteRenderer _lineSr;
     private PlayerController _player;
     private float _flashTimer;
     private bool _lastShow;
-    private bool _loggedTarget;
     private bool _loggedShow;
+    private bool _loggedTarget;
 
     void Awake()
     {
@@ -19,11 +23,22 @@ public class ParryIndicator : MonoBehaviour
         _ringSr = _ring.AddComponent<SpriteRenderer>();
         _ringSr.sprite = CreateRingSprite();
         _ringSr.sortingOrder = 100;
+        _ring.SetActive(false);
+
+        _lineGo = new GameObject("ParryLine");
+        _lineGo.transform.SetParent(transform.parent);
+        _lineSr = _lineGo.AddComponent<SpriteRenderer>();
+        _lineSr.sprite = CreateDashSprite();
+        _lineSr.drawMode = SpriteDrawMode.Tiled;
+        _lineSr.sortingOrder = 99;
+        _lineGo.SetActive(false);
 
         var mat = GetUnlitMaterial();
-        if (mat != null) _ringSr.material = mat;
-
-        _ring.SetActive(false);
+        if (mat != null)
+        {
+            _ringSr.material = mat;
+            _lineSr.material = mat;
+        }
 
         Debug.Log("[ParryIndicator] criado. sprite=" + (_ringSr.sprite != null ? _ringSr.sprite.name : "NULL")
             + " | material=" + (_ringSr.material != null ? _ringSr.material.shader.name : "NULL")
@@ -33,6 +48,7 @@ public class ParryIndicator : MonoBehaviour
     void OnDestroy()
     {
         if (_ring != null) Destroy(_ring);
+        if (_lineGo != null) Destroy(_lineGo);
     }
 
     public void Flash()
@@ -42,12 +58,26 @@ public class ParryIndicator : MonoBehaviour
 
     void Update()
     {
-        if (_player == null || _ring == null) return;
+        if (_player == null) return;
 
         var gm = GameManager.Instance;
         bool show = gm != null && gm.State == GameState.Playing
             && _player.IsAirborne
             && _player.Config.showParryIndicator;
+
+        if (_player.Config.parryIndicatorMode == PlayerConfig.ParryIndicatorMode.LineToTarget)
+        {
+            UpdateLine(show);
+            if (_ring != null) _ring.SetActive(false);
+            return;
+        }
+
+        UpdateCircle(show);
+    }
+
+    private void UpdateCircle(bool show)
+    {
+        if (_ring == null) return;
 
         if (show != _lastShow)
         {
@@ -74,10 +104,10 @@ public class ParryIndicator : MonoBehaviour
                 + " | bounds=" + _ringSr.bounds);
         }
 
-        bool hasTarget = HasProjectileInRange(r);
+        bool hasTarget = _player.FindNearestParryTarget() != null;
         if (hasTarget && !_loggedTarget)
         {
-            Debug.Log("[ParryIndicator] PROJETIL NO ALCANCE - aperte K agora!");
+            Debug.Log("[ParryIndicator] ALVO DE PARRY NO ALCANCE - aperte K agora!");
             _loggedTarget = true;
         }
         else if (!hasTarget)
@@ -90,14 +120,55 @@ public class ParryIndicator : MonoBehaviour
             : (_flashTimer > 0f ? new Color(1f, 0.9f, 0.3f, 1f) : new Color(0.4f, 0.85f, 1f, 1f));
     }
 
-    private bool HasProjectileInRange(float r)
+    private void UpdateLine(bool show)
     {
-        var cols = Physics2D.OverlapCircleAll(transform.position, r);
-        foreach (var c in cols)
+        if (_lineGo == null) return;
+
+        if (!show)
         {
-            if (c.GetComponentInParent<Projectile>() != null) return true;
+            _lineGo.SetActive(false);
+            _lastShow = false;
+            return;
         }
-        return false;
+
+        var cfg = _player.Config;
+        var target = _player.FindNearestParryTarget();
+        if (target == null)
+        {
+            _lineGo.SetActive(false);
+            if (_lastShow)
+            {
+                Debug.Log("[ParryIndicator] OCULTANDO linha (sem alvo)");
+                _lastShow = false;
+            }
+            return;
+        }
+
+        if (!_lastShow)
+        {
+            Debug.Log("[ParryIndicator] MOSTRANDO linha -> " + target.name);
+            _lastShow = true;
+        }
+
+        _flashTimer -= Time.deltaTime;
+
+        Vector2 start = transform.position;
+        Vector2 end = target.bounds.ClosestPoint(start);
+        float dist = Vector2.Distance(start, end);
+
+        float t = Mathf.InverseLerp(cfg.parryRange, 0f, dist);
+        float alpha = Mathf.Clamp01(cfg.parryLineOpacityCurve.Evaluate(t));
+
+        Color color = cfg.parryLineColor;
+        if (_flashTimer > 0f) color = Color.Lerp(color, Color.white, 0.6f);
+        color.a = alpha;
+
+        if (dist < 0.05f) dist = 0.05f;
+        _lineGo.SetActive(true);
+        _lineGo.transform.position = start;
+        _lineGo.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(end.y - start.y, end.x - start.x) * Mathf.Rad2Deg);
+        _lineSr.size = new Vector2(dist, LineHeight);
+        _lineSr.color = color;
     }
 
     private static Material _unlitMaterial;
@@ -138,5 +209,30 @@ public class ParryIndicator : MonoBehaviour
         tex.Apply();
         _ringSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 64f);
         return _ringSprite;
+    }
+
+    private static Sprite _dashSprite;
+
+    private static Sprite CreateDashSprite()
+    {
+        if (_dashSprite != null) return _dashSprite;
+
+        int w = 64, h = 16;
+        var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        tex.wrapMode = TextureWrapMode.Repeat;
+
+        int dashEnd = 34;
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                bool inDash = x < dashEnd;
+                bool inside = y >= 4 && y <= 11;
+                tex.SetPixel(x, y, new Color(1f, 1f, 1f, (inDash && inside) ? 1f : 0f));
+            }
+        }
+        tex.Apply();
+        _dashSprite = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0f, 0.5f), 64f);
+        return _dashSprite;
     }
 }

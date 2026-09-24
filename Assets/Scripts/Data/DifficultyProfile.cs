@@ -8,6 +8,8 @@ public class DifficultyProfile : ScriptableObject
     public AnimationCurve difficultyCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
     [Tooltip("Distancia em que a dificuldade chega ao maximo.")]
     public float difficultyRampDistance = 1500f;
+    [Tooltip("Dificuldade base (0..1) ja no ponto de partida. Acelera o desbloqueio de buracos/obstaculos.")]
+    [Range(0f, 1f)] public float difficultyStartOffset = 0f;
 
     [Header("Velocidade")]
     [Tooltip("Velocidade do jogador em funcao da dificuldade.")]

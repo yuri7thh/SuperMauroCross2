@@ -17,7 +17,7 @@ public class DebugHUD : MonoBehaviour
         if (gm.State == GameState.Menu)
         {
             if (GUILayout.Button("INICIAR")) gm.StartGame();
-            GUILayout.Label("Espaco = pular   |   K = parry (no ar)");
+            GUILayout.Label("Espaco = pular   |   K = parry (no ar)   |   L = parry-pulo");
         }
         else if (gm.State == GameState.GameOver)
         {
