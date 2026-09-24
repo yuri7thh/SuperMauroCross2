@@ -23,8 +23,8 @@ public static class GameBootstrap
             cam = camGo.AddComponent<Camera>();
             cam.orthographic = true;
         }
-        var camCtrl = cam.GetComponent<CameraController>();
-        if (camCtrl == null) camCtrl = cam.gameObject.AddComponent<CameraController>();
+        if (cam.GetComponent<CameraController>() == null)
+            cam.gameObject.AddComponent<CameraController>();
 
         var feedback = gmGo.AddComponent<FeedbackManager>();
         gmGo.AddComponent<UIManager>();
@@ -39,8 +39,6 @@ public static class GameBootstrap
         var pc = playerGo.AddComponent<PlayerController>();
         pc.difficulty = difficulty;
         playerGo.AddComponent<InputReader>();
-
-        camCtrl.target = playerGo.transform;
 
         var spike = PlaceholderFactory.CreateBox("Spike", new Color(0.9f, 0.25f, 0.25f), new Vector2(1f, 0.5f), true);
         spike.AddComponent<Hazard>();

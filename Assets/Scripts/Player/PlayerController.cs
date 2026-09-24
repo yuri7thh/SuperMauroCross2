@@ -49,8 +49,9 @@ public class PlayerController : MonoBehaviour
     private Vector2 _dashDir = Vector2.right;
     private bool _hasParried;
     private bool _canAirJump;
+    private IParryable _pendingParryTarget;
     private bool _pendingParryJump;
-    private Vector2 _parryJumpTarget;
+    private Vector2 _parryTargetPos;
     private float _parryDecelTimer;
     private ParryIndicator _indicator;
     private PlayerAnimator _playerAnimator;
@@ -148,6 +149,7 @@ public class PlayerController : MonoBehaviour
         if (_dashTimer > 0f && (IsGrounded || hitTop))
         {
             _dashTimer = 0f;
+            RemovePendingTarget();
             _pendingParryJump = false;
             if (hitTop && _rb.linearVelocity.y > 0f)
                 _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, 0f);
@@ -157,23 +159,32 @@ public class PlayerController : MonoBehaviour
         {
             _dashTimer -= Time.fixedDeltaTime;
 
-            bool jumpNow = false;
-            if (_pendingParryJump)
+            bool reached = false;
+            if (_pendingParryTarget != null)
             {
-                Vector2 toTarget = _parryJumpTarget - (Vector2)transform.position;
-                jumpNow = Vector2.Dot(toTarget, _dashDir) <= 0f;
+                Vector2 toTarget = _parryTargetPos - (Vector2)transform.position;
+                reached = Vector2.Dot(toTarget, _dashDir) <= 0f;
             }
 
-            if (jumpNow || _dashTimer <= 0f)
+            if (reached)
             {
-                _dashTimer = 0f;
+                RemovePendingTarget();
+
                 if (_pendingParryJump)
                 {
                     _pendingParryJump = false;
-                    _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, Config.parryJumpVelocity);
-                    _parryDecelTimer = Config.parryJumpDecelerationTime;
-                    AudioManager.Instance?.PlayJump();
-                    JumpStarted?.Invoke();
+                    _dashTimer = 0f;
+                    FireParryJump();
+                }
+            }
+            else if (_dashTimer <= 0f)
+            {
+                RemovePendingTarget();
+
+                if (_pendingParryJump)
+                {
+                    _pendingParryJump = false;
+                    FireParryJump();
                 }
             }
         }
@@ -192,7 +203,6 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                _rb.gravityScale = Config.gravityScale;
                 float speed = difficulty != null ? difficulty.Speed : Config.baseSpeed;
                 if (Config.slowInAir && IsAirborne)
                     speed *= Config.airSpeedMultiplier;
@@ -204,7 +214,19 @@ public class PlayerController : MonoBehaviour
                     speed *= Config.parryJumpDeceleration;
                 }
 
-                _rb.linearVelocity = new Vector2(speed, _rb.linearVelocity.y);
+                float vx = speed;
+                if (Config.useWasdMovement && _input != null)
+                {
+                    if (_input.MoveLeft) vx = -speed * Config.backwardSpeedMultiplier;
+                    else if (_input.MoveRight) vx = speed * Config.forwardSpeedMultiplier;
+                }
+
+                float gravity = Config.gravityScale;
+                if (Config.useWasdMovement && _input != null && _input.FastFallHeld && IsAirborne)
+                    gravity = Config.gravityScale * Config.fastFallGravityMultiplier;
+                _rb.gravityScale = gravity;
+
+                _rb.linearVelocity = new Vector2(vx, _rb.linearVelocity.y);
             }
         }
         else
@@ -219,6 +241,16 @@ public class PlayerController : MonoBehaviour
             _rb.position = p;
             if (_rb.linearVelocity.y > 0f)
                 _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, 0f);
+        }
+
+        float leftLimit = GetCameraLeftLimit();
+        if (leftLimit != float.MinValue && _rb.position.x < leftLimit)
+        {
+            Vector2 p = _rb.position;
+            p.x = leftLimit;
+            _rb.position = p;
+            if (_rb.linearVelocity.x < 0f)
+                _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
         }
 
         if (playing)
@@ -250,6 +282,13 @@ public class PlayerController : MonoBehaviour
     {
         if (_cam == null || !_cam.orthographic) return float.MaxValue;
         return _cam.transform.position.y + _cam.orthographicSize - Config.cameraTopMargin;
+    }
+
+    private float GetCameraLeftLimit()
+    {
+        if (_cam == null || !_cam.orthographic) return float.MinValue;
+        float halfW = _cam.orthographicSize * _cam.aspect;
+        return _cam.transform.position.x - halfW + Config.cameraLeftMargin;
     }
 
     private void Jump()
@@ -357,8 +396,10 @@ public class PlayerController : MonoBehaviour
         Vector2 targetPos = targetTransform.position;
 
         ApplyParryEffects(target);
-
         Dash(targetPos);
+        _pendingParryTarget = target;
+        _pendingParryJump = false;
+        _parryTargetPos = targetPos;
     }
 
     private void ParryTargetJump(IParryable target)
@@ -367,10 +408,27 @@ public class PlayerController : MonoBehaviour
         Vector2 targetPos = targetTransform.position;
 
         ApplyParryEffects(target);
-
         Dash(targetPos);
+        _pendingParryTarget = target;
         _pendingParryJump = true;
-        _parryJumpTarget = targetPos;
+        _parryTargetPos = targetPos;
+    }
+
+    private void RemovePendingTarget()
+    {
+        if (_pendingParryTarget != null && (_pendingParryTarget as Component) != null)
+        {
+            _pendingParryTarget.Remove();
+        }
+        _pendingParryTarget = null;
+    }
+
+    private void FireParryJump()
+    {
+        _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, Config.parryJumpVelocity);
+        _parryDecelTimer = Config.parryJumpDecelerationTime;
+        AudioManager.Instance?.PlayJump();
+        JumpStarted?.Invoke();
     }
 
     // Enquanto escorrega (dash) depois de um parry, faz parry automatico em qualquer
@@ -378,6 +436,8 @@ public class PlayerController : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!IsDashing) return;
+        if (!Config.chainParryOnDash) return;
+        if (_pendingParryTarget != null) return;
 
         var p = other.GetComponentInParent<IParryable>();
         if (p == null || p.IsParried) return;

@@ -2,12 +2,10 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    [Tooltip("Alvo a seguir (o jogador).")]
-    public Transform target;
-    [Tooltip("Velocidade de suavizacao do follow.")]
-    public float followSpeed = 10f;
-    [Tooltip("Deslocamento em X a frente do alvo.")]
-    public float lookAhead = 3f;
+    [Tooltip("Velocidade base de rolagem para frente usada se nao houver DifficultyDriver.")]
+    public float scrollSpeed = 8f;
+    [Tooltip("Driver de dificuldade (define a velocidade de rolagem). Se vazio, procura na cena.")]
+    public DifficultyDriver difficulty;
     [Tooltip("Altura fixa da camera.")]
     public float fixedY = 2f;
 
@@ -22,24 +20,36 @@ public class CameraController : MonoBehaviour
         _shakeTime = _shakeDuration;
     }
 
+    void Start()
+    {
+        if (difficulty == null)
+            difficulty = FindFirstObjectByType<DifficultyDriver>();
+    }
+
     void LateUpdate()
     {
-        Vector3 desired;
-        if (target != null)
-            desired = new Vector3(target.position.x + lookAhead, fixedY, -10f);
-        else
-            desired = transform.position;
+        var gm = GameManager.Instance;
+        bool playing = gm != null && gm.State == GameState.Playing;
 
-        Vector3 follow = Vector3.Lerp(transform.position, desired, Mathf.Clamp01(Time.deltaTime * followSpeed));
+        // A camera rola sozinha para frente, sem acompanhar o jogador.
+        // O jogador pode ficar para tras (encosta na borda esquerda) ou
+        // ir para frente alem da camera, sem limite.
+        float camX = transform.position.x;
+        if (playing)
+        {
+            float speed = difficulty != null ? difficulty.Speed : scrollSpeed;
+            camX += speed * Time.deltaTime;
+        }
 
-        Vector3 offset = Vector3.zero;
+        Vector3 pos = new Vector3(camX, fixedY, -10f);
+
         if (_shakeTime > 0f)
         {
             _shakeTime -= Time.unscaledDeltaTime;
             float k = Mathf.Clamp01(_shakeTime / _shakeDuration);
-            offset = Random.insideUnitCircle * (_shakeIntensity * k);
+            pos += (Vector3)(Random.insideUnitCircle * (_shakeIntensity * k));
         }
 
-        transform.position = follow + offset;
+        transform.position = pos;
     }
 }

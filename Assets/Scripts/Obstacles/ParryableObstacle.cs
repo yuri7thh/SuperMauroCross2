@@ -8,6 +8,10 @@ public class ParryableObstacle : MonoBehaviour, IParryable
     {
         if (IsParried) return;
         IsParried = true;
+    }
+
+    public void Remove()
+    {
         Destroy(gameObject);
     }
 }

@@ -1,0 +1,676 @@
+fileFormatVersion: 2
+guid: c9681e0fe802ae646a4730ce9ab9b246
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2021191765375103984
+    second: estrelasescuras_0
+  - first:
+      213: 2367933657593936700
+    second: estrelasescuras_1
+  - first:
+      213: 2263708246121894733
+    second: estrelasescuras_2
+  - first:
+      213: 6864663175722852493
+    second: estrelasescuras_3
+  - first:
+      213: 6267457692834140359
+    second: estrelasescuras_4
+  - first:
+      213: 1802790686748629441
+    second: estrelasescuras_5
+  - first:
+      213: -8356928439071817797
+    second: estrelasescuras_6
+  - first:
+      213: -6602539531476804529
+    second: estrelasescuras_7
+  - first:
+      213: 6602557863014437497
+    second: estrelasescuras_8
+  - first:
+      213: 65383483106042788
+    second: estrelasescuras_9
+  - first:
+      213: 8347326992112658566
+    second: estrelasescuras_10
+  - first:
+      213: 1105517765284319841
+    second: estrelasescuras_11
+  - first:
+      213: 2840106898243782123
+    second: estrelasescuras_12
+  - first:
+      213: 1525574250136063219
+    second: estrelasescuras_13
+  - first:
+      213: -4941223329442986424
+    second: estrelasescuras_14
+  - first:
+      213: 8979781352244250133
+    second: estrelasescuras_15
+  - first:
+      213: -318683030503283281
+    second: estrelasescuras_16
+  - first:
+      213: 1744932436674372658
+    second: estrelasescuras_17
+  - first:
+      213: 5042510287649185094
+    second: estrelasescuras_18
+  - first:
+      213: -4609608714704078925
+    second: estrelasescuras_19
+  - first:
+      213: 8679525987696407276
+    second: estrelasescuras_20
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: estrelasescuras_0
+      rect:
+        serializedVersion: 2
+        x: 799
+        y: 2599
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 01c4fd15cc843f3e0800000000000000
+      internalID: -2021191765375103984
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_1
+      rect:
+        serializedVersion: 2
+        x: 69
+        y: 2519
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3bf390ad179cd020800000000000000
+      internalID: 2367933657593936700
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_2
+      rect:
+        serializedVersion: 2
+        x: 619
+        y: 2469
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d43d73df7ae4a6f10800000000000000
+      internalID: 2263708246121894733
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_3
+      rect:
+        serializedVersion: 2
+        x: 1809
+        y: 2389
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d806aaba9ce244f50800000000000000
+      internalID: 6864663175722852493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_4
+      rect:
+        serializedVersion: 2
+        x: 2289
+        y: 2389
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c01b22b09b7af650800000000000000
+      internalID: 6267457692834140359
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_5
+      rect:
+        serializedVersion: 2
+        x: 1489
+        y: 2349
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c9d808f39cc40910800000000000000
+      internalID: 1802790686748629441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_6
+      rect:
+        serializedVersion: 2
+        x: 759
+        y: 2269
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbfb3cf8cd9360c80800000000000000
+      internalID: -8356928439071817797
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_7
+      rect:
+        serializedVersion: 2
+        x: 849
+        y: 2189
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f4cd9d227411f54a0800000000000000
+      internalID: -6602539531476804529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_8
+      rect:
+        serializedVersion: 2
+        x: 1309
+        y: 2219
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 97210f1056ff0ab50800000000000000
+      internalID: 6602557863014437497
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_9
+      rect:
+        serializedVersion: 2
+        x: 2249
+        y: 2179
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a3a6b47ee948e000800000000000000
+      internalID: 65383483106042788
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_10
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 2139
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 688a7ec5ca9a7d370800000000000000
+      internalID: 8347326992112658566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_11
+      rect:
+        serializedVersion: 2
+        x: 1519
+        y: 2099
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 162d7acdc86975f00800000000000000
+      internalID: 1105517765284319841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_12
+      rect:
+        serializedVersion: 2
+        x: 2069
+        y: 2049
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: be505f92d261a6720800000000000000
+      internalID: 2840106898243782123
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_13
+      rect:
+        serializedVersion: 2
+        x: 1339
+        y: 1969
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3fcc7d992bdeb2510800000000000000
+      internalID: 1525574250136063219
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_14
+      rect:
+        serializedVersion: 2
+        x: 1539
+        y: 1939
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8468da4cf8f3d6bb0800000000000000
+      internalID: -4941223329442986424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_15
+      rect:
+        serializedVersion: 2
+        x: 539
+        y: 1929
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 516023d10979e9c70800000000000000
+      internalID: 8979781352244250133
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_16
+      rect:
+        serializedVersion: 2
+        x: 2209
+        y: 1849
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fa528e2e87fc39bf0800000000000000
+      internalID: -318683030503283281
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_17
+      rect:
+        serializedVersion: 2
+        x: 359
+        y: 1799
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 234680d5ece373810800000000000000
+      internalID: 1744932436674372658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_18
+      rect:
+        serializedVersion: 2
+        x: 2299
+        y: 1769
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64d1597e3689af540800000000000000
+      internalID: 5042510287649185094
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_19
+      rect:
+        serializedVersion: 2
+        x: 2029
+        y: 1719
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b7b486fb416700c0800000000000000
+      internalID: -4609608714704078925
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: estrelasescuras_20
+      rect:
+        serializedVersion: 2
+        x: 589
+        y: 1519
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce27a6356eed37870800000000000000
+      internalID: 8679525987696407276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      estrelasescuras_0: -2021191765375103984
+      estrelasescuras_1: 2367933657593936700
+      estrelasescuras_10: 8347326992112658566
+      estrelasescuras_11: 1105517765284319841
+      estrelasescuras_12: 2840106898243782123
+      estrelasescuras_13: 1525574250136063219
+      estrelasescuras_14: -4941223329442986424
+      estrelasescuras_15: 8979781352244250133
+      estrelasescuras_16: -318683030503283281
+      estrelasescuras_17: 1744932436674372658
+      estrelasescuras_18: 5042510287649185094
+      estrelasescuras_19: -4609608714704078925
+      estrelasescuras_2: 2263708246121894733
+      estrelasescuras_20: 8679525987696407276
+      estrelasescuras_3: 6864663175722852493
+      estrelasescuras_4: 6267457692834140359
+      estrelasescuras_5: 1802790686748629441
+      estrelasescuras_6: -8356928439071817797
+      estrelasescuras_7: -6602539531476804529
+      estrelasescuras_8: 6602557863014437497
+      estrelasescuras_9: 65383483106042788
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

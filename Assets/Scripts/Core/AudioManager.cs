@@ -5,70 +5,104 @@ public class AudioManager : MonoBehaviour
     public static AudioManager Instance { get; private set; }
 
     [Header("Geral")]
-    public bool audioEnabled = true;
+    [SerializeField] private bool _audioEnabled = true;
     [Range(0f, 1f)] public float volume = 0.7f;
+    [Range(0f, 1f)] public float musicVolume = 0.5f;
 
-    [Header("Pulo")]
-    public float jumpFrequency = 500f;
-    public float jumpDuration = 0.12f;
+    [Header("Musica")]
+    [Tooltip("Musica de fundo que toca em loop enquanto o jogador esta jogando.")]
+    public AudioClip music;
 
-    [Header("Parry")]
-    public float parryFrequency = 880f;
-    public float parryDuration = 0.1f;
+    [Header("Sons de Pulo")]
+    [Tooltip("Lista de sons. Um e escolhido aleatoriamente a cada pulo.")]
+    public AudioClip[] jumpSounds;
 
-    [Header("Parry Input")]
-    public float parryInputFrequency = 660f;
-    public float parryInputDuration = 0.08f;
+    [Header("Sons de Parry (acerto)")]
+    [Tooltip("Lista de sons. Um e escolhido aleatoriamente a cada parry acertado.")]
+    public AudioClip[] parrySounds;
 
-    [Header("Morte")]
-    public float deathFrequency = 220f;
-    public float deathDuration = 0.35f;
+    [Header("Sons de Parry (input)")]
+    public AudioClip[] parryInputSounds;
 
-    private AudioSource _source;
-    private AudioClip _jumpClip;
-    private AudioClip _parryClip;
-    private AudioClip _parryInputClip;
-    private AudioClip _deathClip;
+    [Header("Sons de Morte")]
+    [Tooltip("Lista de sons. Um e escolhido aleatoriamente ao morrer.")]
+    public AudioClip[] deathSounds;
+
+    public bool audioEnabled
+    {
+        get => _audioEnabled;
+        set
+        {
+            _audioEnabled = value;
+            if (value) RefreshMusic();
+            else StopMusic();
+        }
+    }
+
+    private AudioSource _sfxSource;
+    private AudioSource _musicSource;
 
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        _source = gameObject.AddComponent<AudioSource>();
-        _source.playOnAwake = false;
-        _jumpClip = GenerateClip(jumpFrequency, jumpDuration);
-        _parryClip = GenerateClip(parryFrequency, parryDuration);
-        _parryInputClip = GenerateClip(parryInputFrequency, parryInputDuration);
-        _deathClip = GenerateClip(deathFrequency, deathDuration);
+        _sfxSource = gameObject.AddComponent<AudioSource>();
+        _sfxSource.playOnAwake = false;
+
+        _musicSource = gameObject.AddComponent<AudioSource>();
+        _musicSource.playOnAwake = false;
+        _musicSource.loop = true;
     }
 
-    public void PlayJump() => Play(_jumpClip);
-    public void PlayParry() => Play(_parryClip);
-    public void PlayParryInput() => Play(_parryInputClip);
-    public void PlayDeath() => Play(_deathClip);
-
-    private void Play(AudioClip clip)
+    void Start()
     {
-        if (!audioEnabled || clip == null || _source == null) return;
-        _source.PlayOneShot(clip, volume);
+        var gm = GameManager.Instance;
+        if (gm != null) gm.OnStateChanged += OnStateChanged;
+        RefreshMusic();
     }
 
-    private AudioClip GenerateClip(float frequency, float duration)
+    void OnDestroy()
     {
-        int sampleRate = 44100;
-        int samples = Mathf.CeilToInt(sampleRate * duration);
-        var data = new float[samples];
+        var gm = GameManager.Instance;
+        if (gm != null) gm.OnStateChanged -= OnStateChanged;
+    }
 
-        for (int i = 0; i < samples; i++)
-        {
-            float t = (float)i / sampleRate;
-            float envelope = 1f - (float)i / samples;
-            data[i] = Mathf.Sin(2f * Mathf.PI * frequency * t) * envelope * 0.5f;
-        }
+    private void OnStateChanged(GameState state) => RefreshMusic();
 
-        var clip = AudioClip.Create("sfx", samples, 1, sampleRate, false);
-        clip.SetData(data, 0);
-        return clip;
+    private void RefreshMusic()
+    {
+        var gm = GameManager.Instance;
+        bool playing = gm != null && gm.State == GameState.Playing;
+        if (playing) PlayMusic();
+        else StopMusic();
+    }
+
+    public void PlayJump() => PlayRandom(jumpSounds);
+    public void PlayParry() => PlayRandom(parrySounds);
+    public void PlayParryInput() => PlayRandom(parryInputSounds);
+    public void PlayDeath() => PlayRandom(deathSounds);
+
+    public void PlayMusic()
+    {
+        if (!_audioEnabled || music == null || _musicSource == null) return;
+        if (_musicSource.isPlaying && _musicSource.clip == music) return;
+        _musicSource.clip = music;
+        _musicSource.volume = musicVolume;
+        _musicSource.Play();
+    }
+
+    public void StopMusic()
+    {
+        if (_musicSource != null && _musicSource.isPlaying)
+            _musicSource.Stop();
+    }
+
+    private void PlayRandom(AudioClip[] clips)
+    {
+        if (!_audioEnabled || clips == null || clips.Length == 0 || _sfxSource == null) return;
+        var clip = clips[Random.Range(0, clips.Length)];
+        if (clip == null) return;
+        _sfxSource.PlayOneShot(clip, volume);
     }
 }

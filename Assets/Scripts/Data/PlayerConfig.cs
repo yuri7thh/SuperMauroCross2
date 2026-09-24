@@ -12,6 +12,14 @@ public class PlayerConfig : ScriptableObject
     public bool slowInAir = true;
     [Tooltip("Multiplicador de velocidade no ar (1 = mesma velocidade, 0 = parado).")]
     [Range(0f, 1f)] public float airSpeedMultiplier = 0.75f;
+    [Tooltip("Habilita o controle WASD: A/D move para tras/frente, S faz cair mais rapido (W tambem pula).")]
+    public bool useWasdMovement = true;
+    [Tooltip("Velocidade de marcha a frente (D) em relacao a velocidade base (para alcancar a rolagem da camera).")]
+    public float forwardSpeedMultiplier = 1.2f;
+    [Tooltip("Velocidade de marcha a re (A) em relacao a velocidade para frente.")]
+    [Range(0f, 1f)] public float backwardSpeedMultiplier = 0.7f;
+    [Tooltip("Multiplicador de gravidade quando S e segurado no ar (cair mais rapido).")]
+    public float fastFallGravityMultiplier = 2f;
 
     [Header("Pulo")]
     public float jumpVelocity = 13f;
@@ -42,6 +50,8 @@ public class PlayerConfig : ScriptableObject
     public Color parryLineColor = new Color(0.2f, 1f, 0.35f, 1f);
     [Tooltip("Curva de opacidade da linha pela distancia: 0 = borda do range externo (sumida), 1 = dentro do range de parry (visivel).")]
     public AnimationCurve parryLineOpacityCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [Tooltip("Se ligado, durante o dash apos um parry o jogador faz parry automatico em outras coisas parryaveis no caminho (cadeia).")]
+    public bool chainParryOnDash = true;
 
     [Header("Dash (no parry)")]
     [Tooltip("Distancia minima percorrida pelo dash (percorre pelo menos ate o alvo e pelo menos esta distancia).")]
@@ -56,8 +66,8 @@ public class PlayerConfig : ScriptableObject
     [Header("Parry pulo (botao L)")]
     [Tooltip("Velocidade vertical para cima ao usar o parry-pulo.")]
     public float parryJumpVelocity = 20f;
-    [Tooltip("Verticalidade do pulo (0 = mantem o movimento horizontal, 1 = pulo 100% vertical).")]
-    [Range(0f, 1f)] public float parryJumpVerticality = 0.85f;
+    [Tooltip("Verticalidade do pulo (0 = mantem o movimento horizontal, 1 = 100% vertical, > 1 = empurra para tras).")]
+    [Range(0f, 3f)] public float parryJumpVerticality = 0.85f;
     [Tooltip("Desaceleracao horizontal breve apos o pulo (1 = sem desacelerar, 0 = para no ar).")]
     [Range(0f, 1f)] public float parryJumpDeceleration = 0.75f;
     [Tooltip("Duracao (s) da desaceleracao breve.")]
@@ -68,6 +78,8 @@ public class PlayerConfig : ScriptableObject
     public bool clampToCameraTop = true;
     [Tooltip("Margem (unidades) abaixo do topo da camera para travar o jogador.")]
     public float cameraTopMargin = 0.5f;
+    [Tooltip("Margem (unidades) a partir da borda esquerda da camera em que o jogador e travado (a camera o carrega).")]
+    public float cameraLeftMargin = 0.5f;
 
     [Header("Morte por queda")]
     [Tooltip("Se o jogador cair abaixo deste Y, morre (buraco).")]

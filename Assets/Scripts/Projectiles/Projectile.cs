@@ -79,6 +79,10 @@ public class Projectile : MonoBehaviour, IPoolable, IParryable
     {
         if (IsParried) return;
         IsParried = true;
+    }
+
+    public void Remove()
+    {
         Despawn();
     }
 

@@ -289,3 +289,5 @@ Cada componente tem um campo `config` (ex: `GameConfig` no `GameManager`). Se va
 | 2026-09-24 | Parry K agora também vai até o alvo (teleporta), one-shot — dash/sustentação removidos do fluxo de parry. |
 | 2026-09-24 | Parry vira dash (não teleporte): percorre pelo menos até o alvo parryável (`dashDistance` mínimo + `dashDuration` fixo); L pula no final do dash. |
 | 2026-09-24 | Pulo do L vertical com desaceleração breve configurável (`parryJumpVerticality`, `parryJumpDeceleration`, `parryJumpDecelerationTime`). |
+| 2026-09-24 | Alvo parryável só é destruído quando o jogador o alcança (não mais no apertar do botão); combo/feedback/pulo disparam na chegada. |
+| 2026-09-24 | Verticalidade do L ampliada (range 0..3); K mantém a propulsão do dash ao atravessar o alvo; objeto é "destruído" logicamente no apertar, mas o visual permanece até o contato. |

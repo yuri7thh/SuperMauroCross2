@@ -77,12 +77,10 @@ public static class GameSetup
         GameObject projectilePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabFolder + "/Projectile.prefab");
         Sprite stripe = EnsureStripeSprite();
 
-        CameraController camCtrl = EnsureCamera();
+        EnsureCamera();
         EnsureGlobalLight();
         DifficultyDriver difficulty = EnsureGameManager();
         PlayerController player = EnsurePlayer(playerPrefab, difficulty);
-
-        if (camCtrl != null && camCtrl.target == null && player != null) camCtrl.target = player.transform;
 
         EnsureLevelGenerator(player, difficulty, spikePrefab, wallPrefab, enemyPrefab);
         EnsureProjectileSpawner(difficulty, projectilePrefab);
