@@ -132,10 +132,10 @@ Assets/
     Obstacles/     Hazard, GroundEnemy
     Projectiles/   Projectile, ProjectileSpawner
     Generation/    LevelGenerator, ObstacleEntry, ChunkData, ChunkLibrary
-    Background/    ParallaxLayer
+    Background/    ParallaxLayer, ParallaxBackground
     Difficulty/    DifficultyDriver
     Data/          GameConfig, PlayerConfig, DifficultyProfile, ProjectileConfig (ScriptableObjects)
-    Editor/        ConfigAssetGenerator, GameSceneBuilder (geram configs, prefabs e a cena)
+    Editor/        GameSetup (gera assets idempotente + cena aditiva)
     UI/            UIManager
     Input/         InputReader
     GameBootstrap.cs  (fallback: monta a cena por código se não houver cena autorada)
@@ -222,22 +222,24 @@ Cada componente tem um campo `config` (ex: `GameConfig` no `GameManager`). Se va
 - [ ] 9c. Polimento restante: partículas melhores, sons reais (assets), balanceamento fino.
 - [x] 10. Sistema de padrões → evoluído para **chunks completos**: `ChunkLibrary` (chão + buraco + obstáculos num único asset, por peso/dificuldade).
 - [x] 10b. Chunks completos (chão + buraco + obstáculos num único asset).
-- [x] 11. Transição para prefabs + cena autorada: `GameSceneBuilder` gera prefabs e `Game.unity`.
+- [x] 11. Transição para prefabs + cena autorada: `GameSetup` (assets idempotente + `Ensure Game Scene` aditivo, sem sobrescrever).
 
 ---
 
 ## Como rodar
 
-1. Abra o projeto na Unity 6 e deixe compilar (os assets de config e prefabs são criados automaticamente).
-2. No menu: **SMC → Build Game Scene** (se a cena `Game.unity` ainda não existir, ela é gerada sozinha).
-3. Abra `Assets/Scenes/Game.unity` e aperte **Play**.
+1. Abra o projeto na Unity 6 e deixe compilar (prefabs, configs e sprites placeholder são criados automaticamente — idempotente).
+2. Se a cena `Game.unity` já existe, abra-a e dê **Play**. Se quiser montar uma cena nova do zero: **File → New Scene** → salve → **SMC → Ensure Game Scene** (adiciona só o que falta, sem sobrescrever).
+3. Aperte **Play**.
 
 **Controles**:
 - **Espaço** = pular.
 - **K** = parry (só no ar).
 - **R** (ou botão na tela) = reiniciar após o game over.
 
-> `GameBootstrap` agora é só um fallback: só monta a cena por código se ela não tiver um `LevelGenerator` (ex: abrir a `SampleScene`). Na `Game.unity`, a cena é autorada — prefabs, referências e configs ficam visíveis e editáveis na hierarquia/inspector e persistem.
+> `SMC → Ensure Game Scene` é **aditivo e idempotente**: verifica o que já existe e só cria/preenche o que está faltando (objetos, componentes, referências null). **Nunca apaga nem sobrescreve** suas alterações manuais. Pode rodar quantas vezes quiser.
+>
+> `GameBootstrap` (runtime) é só um fallback: monta a cena por código se ela não tiver um `LevelGenerator` (ex: abrir a `SampleScene`). Na cena autorada, tudo fica visível/editable e persiste.
 
 ---
 
@@ -258,4 +260,6 @@ Cada componente tem um campo `config` (ex: `GameConfig` no `GameManager`). Se va
 | 2026-08-23 | Suporte a animação do jogador (`PlayerAnimator`): expõe `IsGrounded`, `VelY`, `Speed` e trigger `Parry` ao Animator. |
 | 2026-08-23 | Sistema de parallax (`ParallaxLayer`, camadas com velocidade ajustável) + chão customizável (`groundSprite`) + resolução padrão 1920x1080. |
 | 2026-08-23 | Transição para prefabs + cena autorada (`GameSceneBuilder`): `Game.unity`, prefabs e sprite placeholder como assets reais. |
+| 2026-08-23 | Setup não-destrutivo: `GameSetup` (assets idempotente + `Ensure Game Scene` aditivo). Removido o builder que sobrescrevia a cena. |
+| 2026-08-23 | Parallax em 1:1 com o sprite (`scale` uniforme por camada, default 1); removidos `tileWidth`/`tileHeight`. |
 | 2026-08-23 | Opções persistidas via `PlayerPrefs` (parry/combo/projéteis/slow-mo/shake/partículas/som + volume). |

@@ -9,6 +9,10 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Config do jogador. Se vazio, carrega de Resources/Configs/PlayerConfig ou usa padroes.")]
     public PlayerConfig config;
 
+    [Header("Deteccao de chao")]
+    [Tooltip("Camadas consideradas chao. Vazio (Everything) detecta qualquer colisor solido.")]
+    public LayerMask groundMask = ~0;
+
     private PlayerConfig _loadedConfig;
 
     public PlayerConfig Config
@@ -30,6 +34,8 @@ public class PlayerController : MonoBehaviour
 
     public bool IsGrounded { get; private set; }
     public bool IsAirborne => !IsGrounded;
+
+    public event System.Action JumpStarted;
 
     private Rigidbody2D _rb;
     private Collider2D _col;
@@ -80,6 +86,8 @@ public class PlayerController : MonoBehaviour
             if (gm.ParryEnabled && IsAirborne && !_hasParried)
             {
                 _hasParried = true;
+                Debug.Log("[Parry] INPUT DE PARRY RECONHECIDO (no ar e disponivel)");
+                AudioManager.Instance?.PlayParryInput();
                 if (_indicator != null) _indicator.Flash();
                 TryParry();
             }
@@ -136,6 +144,7 @@ public class PlayerController : MonoBehaviour
     {
         _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, Config.jumpVelocity);
         AudioManager.Instance?.PlayJump();
+        JumpStarted?.Invoke();
     }
 
     private void Dash()
@@ -146,13 +155,15 @@ public class PlayerController : MonoBehaviour
     private bool CheckGround()
     {
         if (_col == null) return false;
-        float half = _col.bounds.extents.y;
-        var hits = Physics2D.RaycastAll(transform.position, Vector2.down, half + Config.groundCheckDistance);
+        Bounds b = _col.bounds;
+        Vector2 center = new Vector2(b.center.x, b.min.y - Config.groundCheckDistance * 0.5f);
+        Vector2 size = new Vector2(b.size.x * Config.groundCheckWidth, Config.groundCheckDistance);
+        var hits = Physics2D.OverlapBoxAll(center, size, 0f, groundMask);
         foreach (var hit in hits)
         {
-            if (hit.collider == _col) continue;   // ignora o proprio colisor do jogador
-            if (hit.collider.isTrigger) continue; // ignora triggers (obstaculos/projeteis)
-            return true;                          // achou chao solido
+            if (hit == _col) continue;        // ignora o proprio colisor do jogador
+            if (hit.isTrigger) continue;      // ignora triggers (obstaculos/projeteis)
+            return true;                      // achou chao solido
         }
         return false;
     }

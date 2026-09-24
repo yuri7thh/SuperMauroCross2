@@ -12,6 +12,8 @@ public class PlayerConfig : ScriptableObject
     [Range(0.1f, 10f)] public float gravityScale = 3.5f;
     [Tooltip("Distancia extra do raycast de chao.")]
     public float groundCheckDistance = 0.15f;
+    [Tooltip("Largura do sensor de chao relativa ao collider (1 = mesma largura).")]
+    [Range(0.1f, 1f)] public float groundCheckWidth = 0.85f;
     [Tooltip("Tempo extra (s) apos sair do chao em que ainda pode pular (coyote time).")]
     public float coyoteTime = 0.1f;
     [Tooltip("Tempo (s) que um pulo apertado antes de aterrissar fica guardado (jump buffer).")]

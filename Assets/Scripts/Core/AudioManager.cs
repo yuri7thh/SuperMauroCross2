@@ -16,6 +16,10 @@ public class AudioManager : MonoBehaviour
     public float parryFrequency = 880f;
     public float parryDuration = 0.1f;
 
+    [Header("Parry Input")]
+    public float parryInputFrequency = 660f;
+    public float parryInputDuration = 0.08f;
+
     [Header("Morte")]
     public float deathFrequency = 220f;
     public float deathDuration = 0.35f;
@@ -23,6 +27,7 @@ public class AudioManager : MonoBehaviour
     private AudioSource _source;
     private AudioClip _jumpClip;
     private AudioClip _parryClip;
+    private AudioClip _parryInputClip;
     private AudioClip _deathClip;
 
     void Awake()
@@ -34,11 +39,13 @@ public class AudioManager : MonoBehaviour
         _source.playOnAwake = false;
         _jumpClip = GenerateClip(jumpFrequency, jumpDuration);
         _parryClip = GenerateClip(parryFrequency, parryDuration);
+        _parryInputClip = GenerateClip(parryInputFrequency, parryInputDuration);
         _deathClip = GenerateClip(deathFrequency, deathDuration);
     }
 
     public void PlayJump() => Play(_jumpClip);
     public void PlayParry() => Play(_parryClip);
+    public void PlayParryInput() => Play(_parryInputClip);
     public void PlayDeath() => Play(_deathClip);
 
     private void Play(AudioClip clip)
