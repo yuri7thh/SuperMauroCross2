@@ -137,18 +137,6 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (_input != null && _input.ParryJumpPressed)
-        {
-            Debug.Log("[ParryJump] L pressionado | noAr=" + IsAirborne + " | jaUsouNestePulo=" + _hasParried);
-            if (gm.ParryEnabled && IsAirborne && !_hasParried)
-            {
-                _hasParried = true;
-                AudioManager.Instance?.PlayParryInput();
-                if (_indicator != null) _indicator.Flash();
-                TryParryJump();
-            }
-        }
-
         if (transform.position.y < Config.killY)
         {
             gm.GameOver();
@@ -442,8 +430,17 @@ public class PlayerController : MonoBehaviour
         target.Parry();
         _hasParried = false;
         _canAirJump = true;
-        if (GameManager.Instance != null) GameManager.Instance.RegisterParry();
-        if (_feedback != null) _feedback.TriggerParryFeedback(transform.position);
+
+        int gained = 0;
+        if (GameManager.Instance != null) gained = Mathf.RoundToInt(GameManager.Instance.RegisterParry());
+
+        if (_feedback != null)
+        {
+            _feedback.TriggerParryFeedback(transform.position);
+            var targetTransform = (target as Component) != null ? (target as Component).transform : null;
+            if (targetTransform != null) _feedback.ShowScorePopup(targetTransform.position, gained);
+        }
+
         AudioManager.Instance?.PlayParry();
         if (_playerAnimator != null) _playerAnimator.TriggerParry();
     }

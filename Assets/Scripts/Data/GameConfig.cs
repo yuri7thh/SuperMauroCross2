@@ -18,14 +18,10 @@ public class GameConfig : ScriptableObject
     [Header("Combo")]
     [Tooltip("Tempo sem parry para resetar o combo.")]
     public float comboResetTime = 3f;
-    [Tooltip("Quanto o multiplicador sobe por parry.")]
-    public float multiplierPerCombo = 1f;
-    [Tooltip("Teto do multiplicador.")]
-    public float maxMultiplier = 10f;
 
     [Header("Score")]
     [Tooltip("Pontos por unidade de distancia.")]
     public float scorePerUnit = 1f;
     [Tooltip("Pontos base por parry (antes do multiplicador).")]
-    public float parryScoreBonus = 50f;
+    public float parryScoreBonus = 25f;
 }

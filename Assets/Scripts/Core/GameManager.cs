@@ -37,8 +37,6 @@ public class GameManager : MonoBehaviour
     public bool ProjectilesEnabled { get => Config.projectilesEnabled; set => Config.projectilesEnabled = value; }
     public bool ReturnToStart => Config.returnToStart;
     public float ComboResetTime => Config.comboResetTime;
-    public float MultiplierPerCombo => Config.multiplierPerCombo;
-    public float MaxMultiplier => Config.maxMultiplier;
     public float ScorePerUnit => Config.scorePerUnit;
     public float ParryScoreBonus => Config.parryScoreBonus;
 
@@ -46,12 +44,14 @@ public class GameManager : MonoBehaviour
     public float Distance { get; private set; }
     public int Combo { get; private set; }
     public float Score => Distance * ScorePerUnit + _parryBonusScore;
-    public float Multiplier => ComboEnabled ? Mathf.Min(1f + Combo * MultiplierPerCombo, MaxMultiplier) : 1f;
+    public float Multiplier => ComboEnabled ? Combo + 1f : 1f;
+    public float ComboTimerNormalized => (ComboResetTime > 0f && Combo > 0) ? Mathf.Clamp01(_comboTimer / ComboResetTime) : 0f;
     public float BestScore => PlayerPrefs.GetFloat("BestScore", 0f);
 
     public event Action<GameState> OnStateChanged;
     public event Action<float> OnScoreChanged;
     public event Action<int> OnComboChanged;
+    public event Action<float> OnParryPoints;
 
     private float _parryBonusScore;
     private float _comboTimer;
@@ -124,7 +124,7 @@ public class GameManager : MonoBehaviour
         SetState(GameState.Playing);
     }
 
-    public void RegisterParry()
+    public float RegisterParry()
     {
         if (ComboEnabled)
         {
@@ -132,8 +132,11 @@ public class GameManager : MonoBehaviour
             _comboTimer = ComboResetTime;
             OnComboChanged?.Invoke(Combo);
         }
-        _parryBonusScore += ParryScoreBonus * Multiplier;
+        float gained = ParryScoreBonus * Multiplier;
+        _parryBonusScore += gained;
         OnScoreChanged?.Invoke(Score);
+        OnParryPoints?.Invoke(gained);
+        return gained;
     }
 
     public void GameOver()

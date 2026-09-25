@@ -174,6 +174,12 @@ public class AudioManager : MonoBehaviour
             _musicSource.Stop();
     }
 
+    public void SetMusicVolume(float v)
+    {
+        musicVolume = v;
+        if (_musicSource != null) _musicSource.volume = v;
+    }
+
     private void SetMuffled(bool muffled)
     {
         _targetCutoff = muffled ? muffledCutoff : normalCutoff;

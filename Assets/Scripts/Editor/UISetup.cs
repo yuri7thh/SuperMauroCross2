@@ -36,6 +36,34 @@ public static class UISetup
         Debug.Log("[SMC] Canvas de UI criado na cena e ligado ao UIManager.");
     }
 
+    [MenuItem("SMC/Rebuild Options Panel")]
+    public static void RebuildOptionsPanel()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+
+        var ui = Object.FindFirstObjectByType<UIManager>();
+        if (ui == null)
+        {
+            Debug.LogWarning("[SMC] UIManager nao encontrado.");
+            return;
+        }
+
+        if (ui.optionsPanel == null)
+        {
+            Debug.LogWarning("[SMC] optionsPanel nulo; nada a limpar.");
+            return;
+        }
+
+        var children = new System.Collections.Generic.List<Transform>();
+        foreach (Transform child in ui.optionsPanel.transform) children.Add(child);
+        foreach (var child in children) Object.DestroyImmediate(child.gameObject);
+
+        BuildOptionsContent(ui, ui.optionsPanel.transform);
+
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+        Debug.Log("[SMC] Options panel reconstruido (apenas 2 sliders).");
+    }
+
     private static void BuildUI(UIManager ui)
     {
         EnsureEventSystem();
@@ -77,7 +105,6 @@ public static class UISetup
 
         ui.distanceText = AnchorText(hud, "", 30, Color.white, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20), new Vector2(450, 40));
         ui.scoreText = AnchorText(hud, "", 30, Color.white, new Vector2(0, 1), new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -70), new Vector2(450, 40));
-        ui.comboText = AnchorText(hud, "", 36, new Color(1f, 0.85f, 0.3f, 1f), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -20), new Vector2(520, 40));
 
         ui.hudPanel = hud.gameObject;
     }
@@ -99,24 +126,18 @@ public static class UISetup
     private static void BuildOptions(UIManager ui, Transform canvas)
     {
         var opts = MakePanel("OptionsPanel", new Color(0f, 0f, 0f, 0.9f), canvas);
-
-        CenterText(opts, "OPCOES", 56, Color.white, new Vector2(0, 250), new Vector2(600, 80));
-
-        float y = 150;
-
-        ui.parryToggle = MakeToggle(opts, "Parry", new Vector2(0, y)); y -= 70;
-        ui.comboToggle = MakeToggle(opts, "Combo", new Vector2(0, y)); y -= 70;
-        ui.projectilesToggle = MakeToggle(opts, "Projeteis", new Vector2(0, y)); y -= 70;
-        ui.slowMoToggle = MakeToggle(opts, "Slow motion", new Vector2(0, y)); y -= 70;
-        ui.shakeToggle = MakeToggle(opts, "Screen shake", new Vector2(0, y)); y -= 70;
-        ui.particlesToggle = MakeToggle(opts, "Particulas", new Vector2(0, y)); y -= 70;
-        ui.soundToggle = MakeToggle(opts, "Som", new Vector2(0, y)); y -= 70;
-
-        ui.volumeSlider = MakeSlider(opts, "Volume", new Vector2(0, y));
-
-        ui.backButton = MakeButton(opts, "VOLTAR", 32, new Vector2(0, -330), new Vector2(240, 60), new Color(0.25f, 0.3f, 0.4f, 1f));
-
         ui.optionsPanel = opts.gameObject;
+        BuildOptionsContent(ui, opts);
+    }
+
+    private static void BuildOptionsContent(UIManager ui, Transform parent)
+    {
+        CenterText(parent, "OPCOES", 56, Color.white, new Vector2(0, 250), new Vector2(600, 80));
+
+        ui.musicVolumeSlider = MakeSlider(parent, "Musica", new Vector2(0, 80));
+        ui.sfxVolumeSlider = MakeSlider(parent, "Efeitos", new Vector2(0, 0));
+
+        ui.backButton = MakeButton(parent, "VOLTAR", 32, new Vector2(0, -330), new Vector2(240, 60), new Color(0.25f, 0.3f, 0.4f, 1f));
     }
 
     private static void EnsureEventSystem()
@@ -251,12 +272,16 @@ public static class UISetup
         var frt = (RectTransform)fill.transform;
         frt.SetParent(rt, false);
         frt.anchorMin = new Vector2(0f, 0.5f);
-        frt.anchorMax = new Vector2(0f, 0.5f);
-        frt.pivot = new Vector2(0f, 0.5f);
+        frt.anchorMax = new Vector2(1f, 0.5f);
+        frt.pivot = new Vector2(0.5f, 0.5f);
         frt.anchoredPosition = Vector2.zero;
-        frt.sizeDelta = new Vector2(280, 10);
+        frt.sizeDelta = new Vector2(0f, 10f);
         fill.sprite = GetWhiteSprite();
-        fill.color = new Color(0.3f, 0.7f, 0.9f, 1f);
+        fill.color = new Color(1f, 1f, 1f, 1f);
+        fill.type = Image.Type.Filled;
+        fill.fillMethod = Image.FillMethod.Horizontal;
+        fill.fillOrigin = 0;
+        fill.fillAmount = 1f;
         slider.fillRect = frt;
 
         return slider;

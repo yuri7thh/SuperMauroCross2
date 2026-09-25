@@ -22,7 +22,12 @@ public class FeedbackManager : MonoBehaviour
     [Tooltip("Template de particula (criado automaticamente se vazio).")]
     public GameObject particleTemplate;
 
+    [Header("Popup de pontos")]
+    [Tooltip("Fonte do popup de pontos do parry. Se vazio, tenta carregar rawpixel-bold e depois a fonte embutida.")]
+    public Font scorePopupFont;
+
     private CameraController _camCtrl;
+    private GameObject _scorePopupTemplate;
 
     void Awake()
     {
@@ -40,6 +45,54 @@ public class FeedbackManager : MonoBehaviour
     public void TriggerDeathFeedback()
     {
         if (shakeEnabled && _camCtrl != null) _camCtrl.Shake(0.5f, 0.7f);
+    }
+
+    public void ShowScorePopup(Vector3 position, int points)
+    {
+        if (_scorePopupTemplate == null) CreateScorePopupTemplate();
+
+        GameObject obj;
+        if (ObjectPool.Instance != null)
+        {
+            obj = ObjectPool.Instance.Spawn(_scorePopupTemplate, position, Quaternion.identity);
+        }
+        else
+        {
+            obj = Instantiate(_scorePopupTemplate, position, Quaternion.identity);
+            obj.SetActive(true);
+        }
+
+        var popup = obj.GetComponent<ScorePopup>();
+        if (popup != null) popup.SetPoints(points);
+    }
+
+    private void CreateScorePopupTemplate()
+    {
+        var t = new GameObject("ScorePopupTemplate");
+        var tm = t.AddComponent<TextMesh>();
+        tm.font = GetScorePopupFont();
+        tm.fontSize = 48;
+        tm.characterSize = 0.12f;
+        tm.anchor = TextAnchor.MiddleCenter;
+        tm.alignment = TextAlignment.Center;
+        tm.color = Color.white;
+
+        var renderer = t.GetComponent<MeshRenderer>();
+        if (renderer != null) renderer.sortingOrder = 100;
+
+        t.AddComponent<ScorePopup>();
+        t.SetActive(false);
+        _scorePopupTemplate = t;
+    }
+
+    private Font GetScorePopupFont()
+    {
+        if (scorePopupFont != null) return scorePopupFont;
+
+        var font = Resources.Load<Font>("Fonts/rawpixel-bold");
+        if (font == null) font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        if (font == null) font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        return font;
     }
 
     private IEnumerator SlowMoRoutine()

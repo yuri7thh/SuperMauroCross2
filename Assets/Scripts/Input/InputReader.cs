@@ -21,10 +21,6 @@ public class InputReader : MonoBehaviour
     [Tooltip("Tecla de parry (só funciona no ar).")]
     public Key parryKey = Key.K;
 
-    [Header("Parry-pulo")]
-    [Tooltip("Tecla do parry-pulo (vai ate o alvo parryavel e pula para cima).")]
-    public Key parryJumpKey = Key.L;
-
     [Header("Reiniciar")]
     [Tooltip("Tecla para reiniciar após o game over.")]
     public Key restartKey = Key.R;
@@ -35,7 +31,6 @@ public class InputReader : MonoBehaviour
         (Keyboard.current[jumpKey].wasReleasedThisFrame || Keyboard.current[jumpKeyAlt].wasReleasedThisFrame);
     public bool ParryPressed => Keyboard.current != null && Keyboard.current[parryKey].wasPressedThisFrame;
     public bool ParryHeld => Keyboard.current != null && Keyboard.current[parryKey].isPressed;
-    public bool ParryJumpPressed => Keyboard.current != null && Keyboard.current[parryJumpKey].wasPressedThisFrame;
     public bool MoveLeft => Keyboard.current != null && Keyboard.current[moveLeftKey].isPressed;
     public bool MoveRight => Keyboard.current != null && Keyboard.current[moveRightKey].isPressed;
     public bool FastFallHeld => Keyboard.current != null && Keyboard.current[fastFallKey].isPressed;
