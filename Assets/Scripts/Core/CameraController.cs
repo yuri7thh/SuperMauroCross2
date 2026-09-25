@@ -30,12 +30,13 @@ public class CameraController : MonoBehaviour
     {
         var gm = GameManager.Instance;
         bool playing = gm != null && gm.State == GameState.Playing;
+        bool menu = gm != null && gm.State == GameState.Menu;
 
         // A camera rola sozinha para frente, sem acompanhar o jogador.
         // O jogador pode ficar para tras (encosta na borda esquerda) ou
         // ir para frente alem da camera, sem limite.
         float camX = transform.position.x;
-        if (playing)
+        if (playing || menu)
         {
             float speed = difficulty != null ? difficulty.Speed : scrollSpeed;
             camX += speed * Time.deltaTime;

@@ -38,7 +38,7 @@ public class LevelGenerator : MonoBehaviour
 
     [Header("Distancias de spawn/despawn")]
     public float spawnAhead = 60f;
-    public float despawnBehind = 20f;
+    public float despawnBehind = 30f;
 
     private float _nextX;
     private readonly List<GameObject> _spawned = new List<GameObject>();
@@ -72,9 +72,16 @@ public class LevelGenerator : MonoBehaviour
 
         BuildTemplateMap();
 
+        SpawnSafeStart();
+
+        EnsureChunksUpTo(player != null ? player.position.x + spawnAhead : spawnAhead);
+    }
+
+    private void SpawnSafeStart()
+    {
         if (player != null)
         {
-            float startX = player.position.x - 5f;
+            float startX = player.position.x - 30f;
             float safeEnd = player.position.x + 25f;
             SpawnGroundSegment(startX, safeEnd - startX);
             _nextX = safeEnd;
@@ -83,13 +90,22 @@ public class LevelGenerator : MonoBehaviour
         {
             _nextX = 0f;
         }
+    }
 
+    public void ResetWorld()
+    {
+        foreach (var go in _spawned) if (go != null) DestroyImmediate(go);
+        _spawned.Clear();
+
+        SpawnSafeStart();
         EnsureChunksUpTo(player != null ? player.position.x + spawnAhead : spawnAhead);
     }
 
     void Update()
     {
         if (player == null) return;
+        var gm = GameManager.Instance;
+        if (gm != null && gm.State == GameState.Transition) return;
         EnsureChunksUpTo(player.position.x + spawnAhead);
         DespawnBehind(player.position.x - despawnBehind);
     }
@@ -98,6 +114,14 @@ public class LevelGenerator : MonoBehaviour
     {
         while (_nextX < targetX)
         {
+            var gm = GameManager.Instance;
+            if (gm != null && gm.State == GameState.Menu)
+            {
+                SpawnGroundSegment(_nextX, fallbackLength);
+                _nextX += fallbackLength;
+                continue;
+            }
+
             var chunk = PickChunk();
             if (chunk == null)
             {

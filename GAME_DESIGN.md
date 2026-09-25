@@ -273,6 +273,8 @@ Cada componente tem um campo `config` (ex: `GameConfig` no `GameManager`). Se va
 | 2026-08-23 | Setup não-destrutivo: `GameSetup` (assets idempotente + `Ensure Game Scene` aditivo). Removido o builder que sobrescrevia a cena. |
 | 2026-08-23 | Parallax em 1:1 com o sprite (`scale` uniforme por camada, default 1); removidos `tileWidth`/`tileHeight`. |
 | 2026-08-23 | UI migrada para Canvas autorado: `UIManager` virou controlador e `UISetup` constrói o Canvas na cena (editável no editor). |
+| 2026-08-23 | Menu "seamless": jogador corre no fundo do menu (filtro preto que some ao iniciar); distância passa a ser relativa ao início da partida. |
+| 2026-08-23 | Sons genéricos de fallback no `AudioManager` (beep por ação, configurável), para quando os efeitos reais ainda não foram colocados. |
 | 2026-08-23 | Opções persistidas via `PlayerPrefs` (parry/combo/projéteis/slow-mo/shake/partículas/som + volume). |
 | 2026-09-24 | Pulo de altura variável (jump cut), dash do parry com `dashDistance` e direção (frente/na direção do projétil), variação vertical dos projéteis (`heightVariance` > 0). |
 | 2026-09-24 | Dash do parry sustentado (segurar o botão) com decaimento de força (`dashDecayCurve`) e tempo máximo (`dashHoldMaxDuration`); sprite rotaciona na direção do dash. |

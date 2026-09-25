@@ -84,4 +84,10 @@ public class PlayerConfig : ScriptableObject
     [Header("Morte por queda")]
     [Tooltip("Se o jogador cair abaixo deste Y, morre (buraco).")]
     public float killY = -8f;
+
+    [Header("Auto-pilot (menu)")]
+    [Tooltip("Intervalo minimo (s) entre acoes aleatorias do jogador no menu.")]
+    public float autoPilotMinInterval = 0.5f;
+    [Tooltip("Intervalo maximo (s) entre acoes aleatorias do jogador no menu.")]
+    public float autoPilotMaxInterval = 2.2f;
 }

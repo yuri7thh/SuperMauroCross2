@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -40,12 +41,19 @@ public class UIManager : MonoBehaviour
     private GameManager _game;
     private AudioManager _audio;
     private FeedbackManager _feedback;
+    private CanvasGroup _menuCanvasGroup;
 
     void Start()
     {
         _game = GameManager.Instance;
         _audio = AudioManager.Instance;
         _feedback = FindFirstObjectByType<FeedbackManager>();
+
+        if (menuPanel != null)
+        {
+            _menuCanvasGroup = menuPanel.GetComponent<CanvasGroup>();
+            if (_menuCanvasGroup == null) _menuCanvasGroup = menuPanel.AddComponent<CanvasGroup>();
+        }
 
         WireButtons();
         WireToggles();
@@ -94,6 +102,23 @@ public class UIManager : MonoBehaviour
 
     private void StartGame() { if (_game != null) _game.StartGame(); }
     private void Restart() { if (_game != null) _game.Restart(); }
+
+    private IEnumerator FadeOutMenu()
+    {
+        if (_menuCanvasGroup != null)
+        {
+            float dur = 0.6f;
+            float t = 0f;
+            while (t < dur)
+            {
+                t += Time.unscaledDeltaTime;
+                _menuCanvasGroup.alpha = Mathf.Lerp(1f, 0f, Mathf.Clamp01(t / dur));
+                yield return null;
+            }
+            _menuCanvasGroup.alpha = 0f;
+        }
+        SetPanel(menuPanel, false);
+    }
 
     private void SetParry(bool v) { if (_game != null) { _game.ParryEnabled = v; PlayerPrefs.SetInt("SMC_parry", v ? 1 : 0); } }
     private void SetCombo(bool v) { if (_game != null) { _game.ComboEnabled = v; PlayerPrefs.SetInt("SMC_combo", v ? 1 : 0); } }
@@ -150,10 +175,19 @@ public class UIManager : MonoBehaviour
 
     private void OnStateChanged(GameState state)
     {
-        SetPanel(menuPanel, state == GameState.Menu);
         SetPanel(hudPanel, state == GameState.Playing);
         SetPanel(gameOverPanel, state == GameState.GameOver);
         SetPanel(optionsPanel, false);
+
+        if (state == GameState.Menu)
+        {
+            SetPanel(menuPanel, true);
+            if (_menuCanvasGroup != null) _menuCanvasGroup.alpha = 1f;
+        }
+        else if (state == GameState.Playing || state == GameState.Transition)
+        {
+            StartCoroutine(FadeOutMenu());
+        }
 
         if (state == GameState.GameOver && _game != null)
         {

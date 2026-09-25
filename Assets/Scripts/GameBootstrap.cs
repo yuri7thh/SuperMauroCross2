@@ -13,7 +13,9 @@ public static class GameBootstrap
         var gmGo = new GameObject("GameManager");
         var gm = gmGo.AddComponent<GameManager>();
         gmGo.AddComponent<ObjectPool>();
-        gmGo.AddComponent<AudioManager>();
+
+        var audioGo = new GameObject("AudioManager");
+        audioGo.AddComponent<AudioManager>();
 
         var cam = Camera.main;
         if (cam == null)

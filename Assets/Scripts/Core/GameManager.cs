@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public enum GameState { Menu, Playing, GameOver }
+public enum GameState { Menu, Transition, Playing, GameOver }
 
 public class GameManager : MonoBehaviour
 {
@@ -35,6 +35,7 @@ public class GameManager : MonoBehaviour
     public bool ParryEnabled { get => Config.parryEnabled; set => Config.parryEnabled = value; }
     public bool ComboEnabled { get => Config.comboEnabled; set => Config.comboEnabled = value; }
     public bool ProjectilesEnabled { get => Config.projectilesEnabled; set => Config.projectilesEnabled = value; }
+    public bool ReturnToStart => Config.returnToStart;
     public float ComboResetTime => Config.comboResetTime;
     public float MultiplierPerCombo => Config.multiplierPerCombo;
     public float MaxMultiplier => Config.maxMultiplier;
@@ -54,6 +55,7 @@ public class GameManager : MonoBehaviour
 
     private float _parryBonusScore;
     private float _comboTimer;
+    private float _distanceOffset;
 
     void Awake()
     {
@@ -88,17 +90,38 @@ public class GameManager : MonoBehaviour
 
     public void SetDistance(float distance)
     {
-        Distance = distance;
+        Distance = distance - _distanceOffset;
         OnScoreChanged?.Invoke(Score);
     }
 
     public void StartGame()
     {
+        _distanceOffset = 0f;
         Distance = 0f;
         _parryBonusScore = 0f;
         ResetCombo();
-        SetState(GameState.Playing);
+
+        if (ReturnToStart)
+        {
+            SetState(GameState.Transition);
+        }
+        else
+        {
+            FinishTransition();
+        }
+
         OnScoreChanged?.Invoke(Score);
+    }
+
+    public void FinishTransition()
+    {
+        var pc = FindFirstObjectByType<PlayerController>();
+        _distanceOffset = pc != null ? pc.transform.position.x : 0f;
+
+        var gen = FindFirstObjectByType<LevelGenerator>();
+        if (gen != null) gen.ResetWorld();
+
+        SetState(GameState.Playing);
     }
 
     public void RegisterParry()

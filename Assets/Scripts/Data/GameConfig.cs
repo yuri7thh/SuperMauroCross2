@@ -11,6 +11,10 @@ public class GameConfig : ScriptableObject
     [Tooltip("Habilita o spawn de projeteis.")]
     public bool projectilesEnabled = true;
 
+    [Header("Menu / inicio")]
+    [Tooltip("Se ligado, ao apertar play o jogador volta (transicao) para a posicao inicial relativa a camera. Se desligado, o jogo comeca direto na posicao onde o piloto automatico esta.")]
+    public bool returnToStart = false;
+
     [Header("Combo")]
     [Tooltip("Tempo sem parry para resetar o combo.")]
     public float comboResetTime = 3f;

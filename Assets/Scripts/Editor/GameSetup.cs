@@ -132,7 +132,18 @@ public static class GameSetup
 
         if (gm == null) gm = gmGo.AddComponent<GameManager>();
         if (gmGo.GetComponent<ObjectPool>() == null) gmGo.AddComponent<ObjectPool>();
-        if (gmGo.GetComponent<AudioManager>() == null) gmGo.AddComponent<AudioManager>();
+
+        var audio = Object.FindFirstObjectByType<AudioManager>();
+        if (audio != null && audio.gameObject == gmGo)
+        {
+            Object.DestroyImmediate(audio);
+            audio = null;
+        }
+        if (audio == null)
+        {
+            var audioGo = new GameObject("AudioManager");
+            audioGo.AddComponent<AudioManager>();
+        }
 
         var difficulty = gmGo.GetComponent<DifficultyDriver>();
         if (difficulty == null) difficulty = gmGo.AddComponent<DifficultyDriver>();

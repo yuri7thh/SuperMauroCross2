@@ -57,7 +57,8 @@ public static class UISetup
 
     private static void BuildMenu(UIManager ui, Transform canvas)
     {
-        var menu = MakePanel("MenuPanel", new Color(0f, 0f, 0f, 0.85f), canvas);
+        var menu = MakePanel("MenuPanel", new Color(0f, 0f, 0f, 0.55f), canvas);
+        menu.gameObject.AddComponent<CanvasGroup>();
 
         CenterText(menu, "SUPER MAURO CROSS 2", 72, Color.white, new Vector2(0, 220), new Vector2(1000, 120));
         CenterText(menu, "Infinite Runner + Parry", 30, new Color(0.8f, 0.8f, 0.8f, 1f), new Vector2(0, 150), new Vector2(600, 40));

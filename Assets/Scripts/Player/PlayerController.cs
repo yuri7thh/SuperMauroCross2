@@ -56,6 +56,8 @@ public class PlayerController : MonoBehaviour
     private ParryIndicator _indicator;
     private PlayerAnimator _playerAnimator;
     private Camera _cam;
+    private float _autoPilotTimer;
+    private float _startCamOffset;
 
     void Awake()
     {
@@ -70,6 +72,7 @@ public class PlayerController : MonoBehaviour
         _input = FindFirstObjectByType<InputReader>();
         _feedback = FindFirstObjectByType<FeedbackManager>();
         _cam = Camera.main;
+        _startCamOffset = transform.position.x - (_cam != null ? _cam.transform.position.x : 0f);
 
         if (GetComponent<ParryIndicator>() == null)
             gameObject.AddComponent<ParryIndicator>();
@@ -78,12 +81,28 @@ public class PlayerController : MonoBehaviour
         if (GetComponent<PlayerAnimator>() == null)
             gameObject.AddComponent<PlayerAnimator>();
         _playerAnimator = GetComponent<PlayerAnimator>();
+
+        _autoPilotTimer = Random.Range(Config.autoPilotMinInterval, Config.autoPilotMaxInterval);
     }
 
     void Update()
     {
         var gm = GameManager.Instance;
-        if (gm == null || gm.State != GameState.Playing) return;
+        if (gm == null) return;
+
+        if (gm.State == GameState.Menu)
+        {
+            UpdateMenuAutoPilot();
+            return;
+        }
+
+        if (gm.State == GameState.Transition)
+        {
+            UpdateTransition();
+            return;
+        }
+
+        if (gm.State != GameState.Playing) return;
 
         if (_input != null && _input.JumpPressed)
         {
@@ -140,6 +159,8 @@ public class PlayerController : MonoBehaviour
     {
         var gm = GameManager.Instance;
         bool playing = gm != null && gm.State == GameState.Playing;
+        bool menu = gm != null && gm.State == GameState.Menu;
+        bool transition = gm != null && gm.State == GameState.Transition;
 
         IsGrounded = CheckGround();
 
@@ -229,6 +250,21 @@ public class PlayerController : MonoBehaviour
                 _rb.linearVelocity = new Vector2(vx, _rb.linearVelocity.y);
             }
         }
+        else if (menu)
+        {
+            _rb.gravityScale = Config.gravityScale;
+            float baseSpeed = difficulty != null ? difficulty.Speed : Config.baseSpeed;
+            float menuSpeed = baseSpeed * Config.forwardSpeedMultiplier;
+            if (_cam != null && transform.position.x - _cam.transform.position.x > 6f)
+                menuSpeed = baseSpeed;
+            _rb.linearVelocity = new Vector2(menuSpeed, _rb.linearVelocity.y);
+        }
+        else if (transition)
+        {
+            _rb.gravityScale = Config.gravityScale;
+            float backSpeed = (difficulty != null ? difficulty.Speed : Config.baseSpeed) * 2f;
+            _rb.linearVelocity = new Vector2(-backSpeed, _rb.linearVelocity.y);
+        }
         else
         {
             _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
@@ -274,7 +310,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (gm != null)
+        if (playing)
             gm.SetDistance(transform.position.x);
     }
 
@@ -296,6 +332,28 @@ public class PlayerController : MonoBehaviour
         _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, Config.jumpVelocity);
         AudioManager.Instance?.PlayJump();
         JumpStarted?.Invoke();
+    }
+
+    private void UpdateMenuAutoPilot()
+    {
+        _autoPilotTimer -= Time.deltaTime;
+        if (_autoPilotTimer <= 0f)
+        {
+            if (IsGrounded) Jump();
+            _autoPilotTimer = Random.Range(Config.autoPilotMinInterval, Config.autoPilotMaxInterval);
+        }
+    }
+
+    private void UpdateTransition()
+    {
+        float camX = _cam != null ? _cam.transform.position.x : 0f;
+        float offset = transform.position.x - camX;
+        if (offset <= _startCamOffset + 0.05f)
+        {
+            transform.position = new Vector3(camX + _startCamOffset, transform.position.y, transform.position.z);
+            if (_rb != null) _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
+            GameManager.Instance?.FinishTransition();
+        }
     }
 
     private void Dash(Vector2 targetPos)
